@@ -30,8 +30,8 @@ val count = db.withTransaction { session =>
 
 db.withTransaction { session =>
   val id = session.updateWithGeneratedKey(
-    "insert into emp (name, dept_no) values (?, ?)", "akira", 1)
-  session.update("update emp set dept_no = ? where id = ?", 2, id)
+    "insert into emp (name, dept_id) values (?, ?)", "akira", 1)
+  session.update("update emp set dept_id = ? where id = ?", 2, id)
   session.update("delete from emp where id = ?", id)
 }
 ```
