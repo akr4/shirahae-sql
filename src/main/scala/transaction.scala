@@ -16,6 +16,7 @@
 package net.physalis.shirahae
 
 import scala.util.control.Exception._
+import com.typesafe.scalalogging.slf4j.Logging
 
 trait TransactionManager {
   def withTransaction[A](cf: ConnectionFactory, f: Session => A): A
@@ -24,27 +25,41 @@ trait TransactionManager {
 /** TransactionManager which throws Exception
  * useful when you use outside transaction such as JTA
  */
-object ErrorTransactionManager extends TransactionManager with Using {
+object ErrorTransactionManager extends TransactionManager {
   def withTransaction[A](cf: ConnectionFactory, f: Session => A): A = {
     throw new UnsupportedOperationException
   }
 }
 
 /** TransactionManager which use Connection.commit/rollback */
-object LocalTransactionManager extends TransactionManager {
+object LocalTransactionManager extends TransactionManager with Logging {
+  val underlyingSession = new ThreadLocal[Option[Session]] {
+    override def initialValue = None
+  }
+
   def withTransaction[A](cf: ConnectionFactory, f: Session => A): A = {
-    val conn = cf.newConnection
-    val session = new Session(conn)
-    try {
-      val result = f(session)
-      conn.commit
-      result
-    } catch {
-      case e: Throwable =>
-        allCatch { conn.rollback }
-        throw e
-    } finally {
-      allCatch { conn.close }
+    underlyingSession.get match {
+      case Some(session) => f(session)
+      case None =>
+        logger.debug("getting new connection")
+        val conn = cf.newConnection
+        val session = new Session(conn)
+        underlyingSession.set(Some(session))
+        try {
+          val result = f(session)
+          logger.debug("commiting transaction")
+          conn.commit
+          result
+        } catch {
+          case e: Throwable =>
+            logger.debug("rolling back transaction")
+            allCatch { conn.rollback }
+          throw e
+        } finally {
+          logger.debug("closing connection")
+          allCatch { conn.close }
+          underlyingSession.remove
+        }
     }
   }
 }
