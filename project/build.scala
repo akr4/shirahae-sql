@@ -24,6 +24,7 @@ object MyBuild extends Build {
         "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
         "com.github.nscala-time" %% "nscala-time" % "0.4.2",
         "org.scalatest" %% "scalatest" % "1.9.1" % "test",
+        "org.mockito" % "mockito-core" % "1.9.5" % "test",
         "org.hsqldb" % "hsqldb" % "2.2.9" % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.12" % "test",
         "org.codehaus.groovy" % "groovy" % "2.1.3" % "test"

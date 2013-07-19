@@ -89,7 +89,19 @@ class Row(session: Session, rs: ResultSet) {
 }
 
 class RowIterator(session: Session, rs: ResultSet) extends Iterator[Row] {
-  def hasNext: Boolean = rs.next
-  def next(): Row = new Row(session, rs)
+  private var _hasNext: Option[Boolean] = None
+  def hasNext: Boolean = {
+    _hasNext match {
+      case Some(x) => x
+      case None  =>
+        val x = rs.next
+        _hasNext = Some(x)
+        x
+    }
+  }
+  def next(): Row = {
+    _hasNext = None
+    new Row(session, rs)
+  }
 }
 
