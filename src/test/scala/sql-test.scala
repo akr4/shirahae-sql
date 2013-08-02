@@ -16,6 +16,7 @@
 package net.physalis.shirahae
 
 import scala.util.Try
+import com.github.nscala_time.time.Imports._
 import org.scalatest.FunSuite
 import org.scalatest.BeforeAndAfter
 
@@ -30,6 +31,16 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
       s.update("insert into emp (id, name) values (?, ?)", 1, "name1")
       s.update("insert into emp (id, name) values (?, ?)", 2, "name2")
     }
+  }
+
+  def prepareTestTable {
+    Try { db.ddl("drop table test") }
+    db.ddl(
+      """create table test (
+        |  c_integer integer,
+        |  c_varchar varchar(10),
+        |  c_timestamp timestamp
+        |)""".stripMargin)
   }
 
   test("select should return existing records") {
@@ -100,5 +111,70 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(name === "name")
   }
 
+  test("can insert null") {
+    prepareTestTable
+    db.withTransaction { session =>
+      session.update("insert into test values (?, ?, ?)", null, null, null)
+    }
+
+    val result = db.withTransaction { _.selectOne("select * from test") {
+      row => (row.intOpt(1), row.stringOpt(2), row.dateTimeOpt(3))
+    }}
+
+    assert(result.isDefined)
+    assert(result.get._1 === None)
+    assert(result.get._2 === None)
+    assert(result.get._3 === None)
+  }
+
+  test("can insert none") {
+    prepareTestTable
+    db.withTransaction { session =>
+      session.update("insert into test values (?, ?, ?)", None, None, None)
+    }
+
+    val result = db.withTransaction { _.selectOne("select * from test") {
+      row => (row.intOpt(1), row.stringOpt(2), row.dateTimeOpt(3))
+    }}
+
+    assert(result.isDefined)
+    assert(result.get._1 === None)
+    assert(result.get._2 === None)
+    assert(result.get._3 === None)
+  }
+
+  test("can get values") {
+    prepareTestTable
+    val now = DateTime.now
+    db.withTransaction { session =>
+      session.update("insert into test values (?, ?, ?)", 1, "abc", now)
+    }
+
+    val result = db.withTransaction { _.selectOne("select * from test") {
+      row => (row.int(1), row.string(2), row.dateTime(3))
+    }}
+
+    assert(result.isDefined)
+    assert(result.get._1 === 1)
+    assert(result.get._2 === "abc")
+    assert(result.get._3 === now)
+  }
+
+  test("can get opt values") {
+    prepareTestTable
+    val now = DateTime.now
+    db.withTransaction { session =>
+      session.update("insert into test values (?, ?, ?)", 1, "abc", now)
+    }
+
+    val result = db.withTransaction { _.selectOne("select * from test") {
+      row => (row.intOpt(1), row.stringOpt(2), row.dateTimeOpt(3))
+    }}
+
+    assert(result.isDefined)
+    assert(result.get._1 === Some(1))
+    assert(result.get._2 === Some("abc"))
+    assert(result.get._3 === Some(now))
+  }
 }
 

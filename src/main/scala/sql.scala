@@ -64,6 +64,12 @@ class Session(conn: Connection) extends Using with Logging {
   private def updateParams(stmt: PreparedStatement, params: Any*) {
     for (pair <- params.zip(Stream.iterate(1)(_ + 1))) {
       pair match {
+        case (None, n) =>
+          val sqlType = stmt.getParameterMetaData.getParameterType(n)
+          stmt.setNull(n, sqlType)
+        case (null, n) =>
+          val sqlType = stmt.getParameterMetaData.getParameterType(n)
+          stmt.setNull(n, sqlType)
         case (p: String, n) => stmt.setString(n, p)
         case (p: Int, n) => stmt.setInt(n, p)
         case (p: Long, n) => stmt.setLong(n, p)
@@ -83,9 +89,19 @@ class Session(conn: Connection) extends Using with Logging {
 
 class Row(session: Session, rs: ResultSet) {
   def int(n: Int): Int = rs.getInt(n)
+  def intOpt(n: Int): Option[Int] = opt(n)(int)
   def long(n: Int): Long = rs.getLong(n)
+  def longOpt(n: Int): Option[Long] = opt(n)(long)
   def string(n: Int): String = rs.getString(n)
+  def stringOpt(n: Int): Option[String] = opt(n)(string)
   def dateTime(n: Int): DateTime = new DateTime(rs.getTimestamp(n))
+  def dateTimeOpt(n: Int): Option[DateTime] = opt(n)(dateTime)
+
+  private def opt[A](n: Int)(f: Int => A): Option[A] = {
+    val v = f(n)
+    if (rs.wasNull) None
+    else Some(v)
+  }
 }
 
 class RowIterator(session: Session, rs: ResultSet) extends Iterator[Row] {
