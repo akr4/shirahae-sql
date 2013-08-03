@@ -38,6 +38,7 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     db.ddl(
       """create table test (
         |  c_integer integer,
+        |  c_boolean boolean,
         |  c_varchar varchar(10),
         |  c_timestamp timestamp
         |)""".stripMargin)
@@ -114,67 +115,69 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
   test("can insert null") {
     prepareTestTable
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?)", null, null, null)
+      session.update("insert into test values (?, ?, ?, ?)", null, null, null, null)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.intOpt(1), row.stringOpt(2), row.dateTimeOpt(3))
+      row => (row.int(1), row.boolean(2), row.stringOpt(3), row.dateTimeOpt(4))
     }}
 
     assert(result.isDefined)
-    assert(result.get._1 === None)
-    assert(result.get._2 === None)
+    assert(result.get._1 === 0)
+    assert(result.get._2 === false)
     assert(result.get._3 === None)
+    assert(result.get._4 === None)
   }
 
   test("can insert none") {
     prepareTestTable
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?)", None, None, None)
+      session.update("insert into test values (?, ?, ?, ?)", None, None, None, None)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.intOpt(1), row.stringOpt(2), row.dateTimeOpt(3))
+      row => (row.int(1), row.boolean(2), row.stringOpt(3), row.dateTimeOpt(4))
     }}
 
     assert(result.isDefined)
-    assert(result.get._1 === None)
-    assert(result.get._2 === None)
+    assert(result.get._1 === 0)
+    assert(result.get._2 === false)
     assert(result.get._3 === None)
+    assert(result.get._4 === None)
   }
 
   test("can get values") {
     prepareTestTable
     val now = DateTime.now
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?)", 1, "abc", now)
+      session.update("insert into test values (?, ?, ?, ?)", 1, true, "abc", now)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.string(2), row.dateTime(3))
+      row => (row.int(1), row.boolean(2), row.string(3), row.dateTime(4))
     }}
 
     assert(result.isDefined)
     assert(result.get._1 === 1)
-    assert(result.get._2 === "abc")
-    assert(result.get._3 === now)
+    assert(result.get._2 === true)
+    assert(result.get._3 === "abc")
+    assert(result.get._4 === now)
   }
 
   test("can get opt values") {
     prepareTestTable
     val now = DateTime.now
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?)", 1, "abc", now)
+      session.update("insert into test (c_varchar, c_timestamp) values (?, ?)", "abc", now)
     }
 
-    val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.intOpt(1), row.stringOpt(2), row.dateTimeOpt(3))
+    val result = db.withTransaction { _.selectOne("select c_varchar, c_timestamp from test") {
+      row => (row.stringOpt(1), row.dateTimeOpt(2))
     }}
 
     assert(result.isDefined)
-    assert(result.get._1 === Some(1))
-    assert(result.get._2 === Some("abc"))
-    assert(result.get._3 === Some(now))
+    assert(result.get._1 === Some("abc"))
+    assert(result.get._2 === Some(now))
   }
 }
 

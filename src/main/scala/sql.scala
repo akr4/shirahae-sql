@@ -74,7 +74,10 @@ class Session(conn: Connection) extends Using with Logging {
         case (p: Int, n) => stmt.setInt(n, p)
         case (p: Long, n) => stmt.setLong(n, p)
         case (p: DateTime, n) => stmt.setTimestamp(n, new java.sql.Timestamp(p.getMillis))
-        case x => throw new IllegalArgumentException(s"unsupported type: ${x}")
+        case (p: Boolean, n) => stmt.setBoolean(n, p)
+        case x =>
+          val className = x._1.getClass.getName
+          throw new IllegalArgumentException(s"unsupported type: ${className} ${x}")
       }
     }
   }
@@ -89,11 +92,10 @@ class Session(conn: Connection) extends Using with Logging {
 
 class Row(session: Session, rs: ResultSet) {
   def int(n: Int): Int = rs.getInt(n)
-  def intOpt(n: Int): Option[Int] = opt(n)(int)
   def long(n: Int): Long = rs.getLong(n)
-  def longOpt(n: Int): Option[Long] = opt(n)(long)
   def string(n: Int): String = rs.getString(n)
   def stringOpt(n: Int): Option[String] = opt(n)(string)
+  def boolean(n: Int): Boolean = rs.getBoolean(n)
   def dateTime(n: Int): DateTime = new DateTime(rs.getTimestamp(n))
   def dateTimeOpt(n: Int): Option[DateTime] = opt(n)(dateTime)
 
