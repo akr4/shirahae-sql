@@ -20,11 +20,11 @@ import java.sql.{ Connection, Statement, PreparedStatement, ResultSet, SQLExcept
 import com.typesafe.scalalogging.slf4j.Logging
 
 
-class Session(conn: Connection) extends Using with Logging {
+class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using with Logging {
   def select[A](sql: String, params: Any*)(f: Iterator[Row] => A): A = {
     using(conn.prepareStatement(sql)) { stmt =>
       updateParams(stmt, params: _*)
-      logSql(sql, params: _*)
+      sqlLogger.log(sql, params: _*)
       using(stmt.executeQuery) { rs => f(new RowIterator(this, rs)) }
     }
   }
@@ -40,7 +40,7 @@ class Session(conn: Connection) extends Using with Logging {
   def updateWithGeneratedKey(sql: String, params: Any*): Long = {
     using(conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) { stmt =>
       updateParams(stmt, params: _*)
-      logSql(sql, params: _*)
+      sqlLogger.log(sql, params: _*)
 
       stmt.executeUpdate()
       using(stmt.getGeneratedKeys) { rs =>
@@ -55,7 +55,7 @@ class Session(conn: Connection) extends Using with Logging {
   def update(sql: String, params: Any*) {
     using(conn.prepareStatement(sql)) { stmt =>
       updateParams(stmt, params: _*)
-      logSql(sql, params: _*)
+      sqlLogger.log(sql, params: _*)
 
       stmt.executeUpdate()
     }
@@ -79,13 +79,6 @@ class Session(conn: Connection) extends Using with Logging {
           val className = x._1.getClass.getName
           throw new IllegalArgumentException(s"unsupported type: ${className} ${x}")
       }
-    }
-  }
-
-  private def logSql(sql: String, params: Any*) {
-    logger.debug(sql)
-    params.zipWithIndex.foreach { x =>
-      logger.debug(s"${x._2 + 1}: ${x._1}")
     }
   }
 }

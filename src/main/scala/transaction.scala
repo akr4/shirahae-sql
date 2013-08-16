@@ -19,14 +19,14 @@ import scala.util.control.Exception._
 import com.typesafe.scalalogging.slf4j.Logging
 
 trait TransactionManager {
-  def withTransaction[A](cf: ConnectionFactory, f: Session => A): A
+  def withTransaction[A](cf: ConnectionFactory, f: Session => A)(implicit sqlLogger: SqlLogger): A
 }
 
 /** TransactionManager which throws Exception
  * useful when you use outside transaction such as JTA
  */
 object ErrorTransactionManager extends TransactionManager {
-  def withTransaction[A](cf: ConnectionFactory, f: Session => A): A = {
+  def withTransaction[A](cf: ConnectionFactory, f: Session => A)(implicit sqlLogger: SqlLogger): A = {
     throw new UnsupportedOperationException
   }
 }
@@ -37,7 +37,7 @@ object LocalTransactionManager extends TransactionManager with Logging {
     override def initialValue = None
   }
 
-  def withTransaction[A](cf: ConnectionFactory, f: Session => A): A = {
+  def withTransaction[A](cf: ConnectionFactory, f: Session => A)(implicit sqlLogger: SqlLogger): A = {
     underlyingSession.get match {
       case Some(session) => f(session)
       case None =>

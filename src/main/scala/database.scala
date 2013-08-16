@@ -20,7 +20,9 @@ import javax.sql.DataSource
 import scala.util.control.Exception._
 
 
-class Database(tm: TransactionManager, cf: ConnectionFactory) extends Using {
+class Database(tm: TransactionManager, cf: ConnectionFactory,
+  implicit private val sqlLogger: SqlLogger = SimpleSqlLogger) extends Using {
+
   def ddl(sql: String) {
     withSession(_.update(sql))
   }

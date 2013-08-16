@@ -19,31 +19,17 @@ import scala.util.Try
 import org.scalatest.FunSuite
 import org.mockito.Mockito._
 
-import java.sql.Connection
+import com.github.nscala_time.time.Imports._
 
-class TransactionSuite extends FunSuite {
+class LogSuite extends FunSuite {
 
-  //implicit val sqlLogger = ParameterEmbeddedStyleSqlLogger
-  implicit val sqlLogger = SimpleSqlLogger
+  test("generated sql should be valid") {
+    val sql = ParameterEmbeddedStyleSqlLogger.createMessage(
+      "select * from message where id = ? and user_name = ? and created_at < ?",
+      1, "abc", new DateTime(2013, 8, 16, 23, 9, 0, 0)
+    )
 
-  test("nested transaction should do nothing") {
-    val conn = mock(classOf[Connection])
-    val cf = mock(classOf[ConnectionFactory])
-
-    when(cf.newConnection).thenReturn(conn)
-
-    val tm = LocalTransactionManager
-
-    tm.withTransaction(cf, { _ =>
-      tm.withTransaction(cf, { _ => })
-      tm.withTransaction(cf, { _ =>
-        tm.withTransaction(cf, { _ => })
-      })
-    })
-
-    verify(cf, times(1)).newConnection
-    verify(conn, times(1)).commit
+    assert(sql === "select * from message where id = 1 and user_name = 'abc' and created_at < '2013-08-16 23:09:00'")
   }
 }
-
 
