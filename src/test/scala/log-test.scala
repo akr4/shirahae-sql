@@ -24,12 +24,23 @@ import com.github.nscala_time.time.Imports._
 class LogSuite extends FunSuite {
 
   test("generated sql should be valid") {
-    val sql = ParameterEmbeddedStyleSqlLogger.createMessage(
+    val sql = EmbeddedParameterStyleSqlLogger.createMessage(
       "select * from message where id = ? and user_name = ? and created_at < ?",
-      1, "abc", new DateTime(2013, 8, 16, 23, 9, 0, 0)
+      List(1, "abc", new DateTime(2013, 8, 16, 23, 9, 0, 0))
     )
 
     assert(sql === "select * from message where id = 1 and user_name = 'abc' and created_at < '2013-08-16 23:09:00'")
+  }
+
+  test("log works without error") {
+    EmbeddedParameterStyleSqlLogger.log(
+      "select * from message where id = ? and user_name = ? and created_at < ?",
+      1, "abc", new DateTime(2013, 8, 16, 23, 9, 0, 0)
+    )
+  }
+
+  test("log works with single argument without error") {
+    EmbeddedParameterStyleSqlLogger.log("select * from message where id = ?", 1)
   }
 }
 

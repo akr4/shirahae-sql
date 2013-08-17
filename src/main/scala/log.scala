@@ -29,15 +29,15 @@ object SimpleSqlLogger extends SqlLogger with Logging {
   }
 }
 
-object ParameterEmbeddedStyleSqlLogger extends SqlLogger with Logging {
+object EmbeddedParameterStyleSqlLogger extends SqlLogger with Logging {
   val R = """\?""".r
 
   def log(sql: String, params: Any*) {
-    logger.debug(createMessage(sql, params))
+    logger.debug(createMessage(sql, params.toList))
   }
 
-  def createMessage(sql: String, params: Any*): String = {
-    replace(sql, params.toList)
+  def createMessage(sql: String, params: List[Any]): String = {
+    replace(sql, params)
   }
 
   @annotation.tailrec
