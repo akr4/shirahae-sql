@@ -19,6 +19,7 @@ import com.github.nscala_time.time.Imports._
 import java.sql.{ Connection, Statement, PreparedStatement, ResultSet, SQLException }
 import com.typesafe.scalalogging.slf4j.Logging
 
+class TooManyRowsException(message: String = null, cause: Throwable = null) extends Exception
 
 class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using with Logging {
   def select[A](sql: String, params: Any*)(f: Iterator[Row] => A): A = {
@@ -29,10 +30,18 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
     }
   }
 
+  /** get a row as Option
+   * @throws TooManyRowsException in case of more than one rows found
+   */
   def selectOne[A](sql: String, params: Any*)(f: Row => A): Option[A] = {
     select(sql, params: _*) { rows =>
-      if (rows.hasNext) Some(f(rows.next))
-      else None
+      if (rows.hasNext) {
+        val nextRow = f(rows.next)
+        if (rows.hasNext) throw new TooManyRowsException
+        Some(nextRow)
+      } else {
+        None
+      }
     }
   }
 

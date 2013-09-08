@@ -77,10 +77,11 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result === Some(1))
   }
 
-  test("selectOne should return first record even if there are more") {
+  test("selectOne should throw TooManyRowsException if there are more") {
     prepareEmp
-    val result = db.withTransaction { _.selectOne("select id from emp") { _.int(1) }}
-    assert(result === Some(1))
+    intercept[TooManyRowsException] {
+      db.withTransaction { _.selectOne("select id from emp") { _.int(1) }}
+    }
   }
 
   test("update can insert") {
