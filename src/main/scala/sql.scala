@@ -71,23 +71,28 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
   }
 
   private def updateParams(stmt: PreparedStatement, params: Any*) {
-    for (pair <- params.zip(Stream.iterate(1)(_ + 1))) {
-      pair match {
-        case (None, n) =>
-          val sqlType = stmt.getParameterMetaData.getParameterType(n)
-          stmt.setNull(n, sqlType)
-        case (null, n) =>
-          val sqlType = stmt.getParameterMetaData.getParameterType(n)
-          stmt.setNull(n, sqlType)
-        case (p: String, n) => stmt.setString(n, p)
-        case (p: Int, n) => stmt.setInt(n, p)
-        case (p: Long, n) => stmt.setLong(n, p)
-        case (p: DateTime, n) => stmt.setTimestamp(n, new java.sql.Timestamp(p.getMillis))
-        case (p: Boolean, n) => stmt.setBoolean(n, p)
-        case x =>
-          val className = x._1.getClass.getName
-          throw new IllegalArgumentException(s"unsupported type: ${className} ${x}")
-      }
+    for ((param, position) <- params.zip(Stream.iterate(1)(_ + 1))) {
+      updateParam(stmt, param, position)
+    }
+  }
+
+  private def updateParam(stmt: PreparedStatement, param: Any, position: Int) {
+    (param, position) match {
+      case (Some(x), n) => updateParam(stmt, x, n)
+      case (None, n) =>
+        val sqlType = stmt.getParameterMetaData.getParameterType(n)
+        stmt.setNull(n, sqlType)
+      case (null, n) =>
+        val sqlType = stmt.getParameterMetaData.getParameterType(n)
+        stmt.setNull(n, sqlType)
+      case (p: String, n) => stmt.setString(n, p)
+      case (p: Int, n) => stmt.setInt(n, p)
+      case (p: Long, n) => stmt.setLong(n, p)
+      case (p: DateTime, n) => stmt.setTimestamp(n, new java.sql.Timestamp(p.getMillis))
+      case (p: Boolean, n) => stmt.setBoolean(n, p)
+      case x =>
+        val className = x._1.getClass.getName
+        throw new IllegalArgumentException(s"unsupported type: ${className} ${x}")
     }
   }
 }

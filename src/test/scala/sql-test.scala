@@ -130,6 +130,24 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._4 === None)
   }
 
+  test("can insert some") {
+    prepareTestTable
+    val now = DateTime.now
+    db.withTransaction { session =>
+      session.update("insert into test values (?, ?, ?, ?)", Some(1), Some(true), Some("abc"), Some(now))
+    }
+
+    val result = db.withTransaction { _.selectOne("select * from test") {
+      row => (row.int(1), row.boolean(2), row.stringOpt(3), row.dateTimeOpt(4))
+    }}
+
+    assert(result.isDefined)
+    assert(result.get._1 === 1)
+    assert(result.get._2 === true)
+    assert(result.get._3 === Some("abc"))
+    assert(result.get._4 === Some(now))
+  }
+
   test("can insert none") {
     prepareTestTable
     db.withTransaction { session =>
