@@ -5,7 +5,7 @@ object MyBuild extends Build {
 
   lazy val main = Project("shirahae-sql", file("."),
     settings = Defaults.defaultSettings ++ Seq(
-      version := "0.9",
+      version := "0.10",
       organization := "net.physalis",
       crossScalaVersions := Seq("2.10.2"),
       scalaVersion := "2.10.2",
