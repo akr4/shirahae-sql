@@ -38,6 +38,9 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     db.ddl(
       """create table test (
         |  c_integer integer,
+        |  c_long bigint,
+        |  c_float float,
+        |  c_double double,
         |  c_boolean boolean,
         |  c_varchar varchar(10),
         |  c_timestamp timestamp
@@ -116,71 +119,86 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
   test("can insert null") {
     prepareTestTable
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?)", null, null, null, null)
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)", null, null, null, null, null, null, null)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.boolean(2), row.stringOpt(3), row.dateTimeOpt(4))
+      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.stringOpt(6), row.dateTimeOpt(7))
     }}
 
     assert(result.isDefined)
     assert(result.get._1 === 0)
-    assert(result.get._2 === false)
-    assert(result.get._3 === None)
-    assert(result.get._4 === None)
+    assert(result.get._2 === 0L)
+    assert(result.get._3 === 0.0)
+    assert(result.get._4 === 0.0)
+    assert(result.get._5 === false)
+    assert(result.get._6 === None)
+    assert(result.get._7 === None)
   }
 
   test("can insert some") {
     prepareTestTable
     val now = DateTime.now
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?)", Some(1), Some(true), Some("abc"), Some(now))
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
+        Some(1), Some(1L), Some(1.0), Some(1.0), Some(true), Some("abc"), Some(now))
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.boolean(2), row.stringOpt(3), row.dateTimeOpt(4))
+      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.stringOpt(6), row.dateTimeOpt(7))
     }}
 
     assert(result.isDefined)
     assert(result.get._1 === 1)
-    assert(result.get._2 === true)
-    assert(result.get._3 === Some("abc"))
-    assert(result.get._4 === Some(now))
+    assert(result.get._2 === 1L)
+    assert(result.get._3 === 1.0)
+    assert(result.get._4 === 1.0)
+    assert(result.get._5 === true)
+    assert(result.get._6 === Some("abc"))
+    assert(result.get._7 === Some(now))
   }
 
   test("can insert none") {
     prepareTestTable
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?)", None, None, None, None)
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
+        None, None, None, None, None, None, None)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.boolean(2), row.stringOpt(3), row.dateTimeOpt(4))
+      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.stringOpt(6), row.dateTimeOpt(7))
     }}
 
     assert(result.isDefined)
     assert(result.get._1 === 0)
-    assert(result.get._2 === false)
-    assert(result.get._3 === None)
-    assert(result.get._4 === None)
+    assert(result.get._2 === 0L)
+    assert(result.get._3 === 0.0)
+    assert(result.get._4 === 0.0)
+    assert(result.get._5 === false)
+    assert(result.get._6 === None)
+    assert(result.get._7 === None)
   }
 
   test("can get values") {
     prepareTestTable
     val now = DateTime.now
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?)", 1, true, "abc", now)
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
+        1, 1L, 1.0, 1.0, true, "abc", now)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.boolean(2), row.string(3), row.dateTime(4))
+      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.string(6), row.dateTime(7))
     }}
 
     assert(result.isDefined)
     assert(result.get._1 === 1)
-    assert(result.get._2 === true)
-    assert(result.get._3 === "abc")
-    assert(result.get._4 === now)
+    assert(result.get._2 === 1L)
+    assert(result.get._3 === 1.0)
+    assert(result.get._4 === 1.0)
+    assert(result.get._5 === true)
+    assert(result.get._6 === "abc")
+    assert(result.get._7 === now)
   }
 
   test("can get opt values") {

@@ -88,6 +88,8 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
       case (p: String, n) => stmt.setString(n, p)
       case (p: Int, n) => stmt.setInt(n, p)
       case (p: Long, n) => stmt.setLong(n, p)
+      case (p: Float, n) => stmt.setFloat(n, p)
+      case (p: Double, n) => stmt.setDouble(n, p)
       case (p: DateTime, n) => stmt.setTimestamp(n, new java.sql.Timestamp(p.getMillis))
       case (p: Boolean, n) => stmt.setBoolean(n, p)
       case x =>
@@ -100,6 +102,8 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
 class Row(session: Session, rs: ResultSet) {
   def int(n: Int): Int = rs.getInt(n)
   def long(n: Int): Long = rs.getLong(n)
+  def float(n: Int): Float = rs.getFloat(n)
+  def double(n: Int): Double = rs.getDouble(n)
   def string(n: Int): String = rs.getString(n)
   def stringOpt(n: Int): Option[String] = opt(n)(string)
   def boolean(n: Int): Boolean = rs.getBoolean(n)
