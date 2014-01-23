@@ -57,15 +57,9 @@ object EmbeddedParameterStyleSqlLogger extends SqlLogger with Logging {
       case null => "null"
       case None => "null"
       case Some(p) => expr(p)
-      case p: Int => p.toString
-      case p: Long => p.toString
-      case p: Float => p.toString
-      case p: Double => p.toString
-      case p: String => s"'${p}'" // TODO: SQL escape
-      case p: DateTime =>
-        val s = p.toString("yyyy-MM-dd HH:mm:ss")
-        s"'${s}'"
-      case p: Boolean => p.toString
+      case p: String => "'" + p + "'"
+      case p: DateTime => "'" + p.toString("yyyy-MM-dd HH:mm:ss") + "'"
+      case p => p.toString
     }
   }
 

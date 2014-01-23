@@ -188,7 +188,7 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.string(6), row.dateTime(7))
+      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.string(6), row.dateTime(7), row.any(6))
     }}
 
     assert(result.isDefined)
@@ -199,6 +199,7 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._5 === true)
     assert(result.get._6 === "abc")
     assert(result.get._7 === now)
+    assert(result.get._8 === "abc")
   }
 
   test("can get opt values") {
@@ -209,12 +210,13 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     }
 
     val result = db.withTransaction { _.selectOne("select c_varchar, c_timestamp from test") {
-      row => (row.stringOpt(1), row.dateTimeOpt(2))
+      row => (row.stringOpt(1), row.dateTimeOpt(2), row.anyOpt(1))
     }}
 
     assert(result.isDefined)
     assert(result.get._1 === Some("abc"))
     assert(result.get._2 === Some(now))
+    assert(result.get._3 === Some("abc"))
   }
 }
 

@@ -76,24 +76,24 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
     }
   }
 
+  @annotation.tailrec
   private def updateParam(stmt: PreparedStatement, param: Any, position: Int) {
-    (param, position) match {
-      case (Some(x), n) => updateParam(stmt, x, n)
-      case (None, n) =>
-        val sqlType = stmt.getParameterMetaData.getParameterType(n)
-        stmt.setNull(n, sqlType)
-      case (null, n) =>
-        val sqlType = stmt.getParameterMetaData.getParameterType(n)
-        stmt.setNull(n, sqlType)
-      case (p: String, n) => stmt.setString(n, p)
-      case (p: Int, n) => stmt.setInt(n, p)
-      case (p: Long, n) => stmt.setLong(n, p)
-      case (p: Float, n) => stmt.setFloat(n, p)
-      case (p: Double, n) => stmt.setDouble(n, p)
-      case (p: DateTime, n) => stmt.setTimestamp(n, new java.sql.Timestamp(p.getMillis))
-      case (p: Boolean, n) => stmt.setBoolean(n, p)
+    def setNull(stmt: PreparedStatement, position: Int) {
+      stmt.setNull(position, stmt.getParameterMetaData.getParameterType(position))
+    }
+    param match {
+      case Some(x) => updateParam(stmt, x, position)
+      case None => setNull(stmt, position)
+      case null => setNull(stmt, position)
+      case p: String => stmt.setString(position, p)
+      case p: Int => stmt.setInt(position, p)
+      case p: Long => stmt.setLong(position, p)
+      case p: Float => stmt.setFloat(position, p)
+      case p: Double => stmt.setDouble(position, p)
+      case p: DateTime => stmt.setTimestamp(position, new java.sql.Timestamp(p.getMillis))
+      case p: Boolean => stmt.setBoolean(position, p)
       case x =>
-        val className = x._1.getClass.getName
+        val className = x.getClass.getName
         throw new IllegalArgumentException(s"unsupported type: ${className} ${x}")
     }
   }
@@ -109,6 +109,8 @@ class Row(session: Session, rs: ResultSet) {
   def boolean(n: Int): Boolean = rs.getBoolean(n)
   def dateTime(n: Int): DateTime = new DateTime(rs.getTimestamp(n))
   def dateTimeOpt(n: Int): Option[DateTime] = opt(n)(dateTime)
+  def any(n: Int): Any = rs.getObject(n)
+  def anyOpt(n: Int): Option[Any] = opt(n)(any)
 
   private def opt[A](n: Int)(f: Int => A): Option[A] = {
     val v = f(n)
