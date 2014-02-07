@@ -101,12 +101,17 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
 
 class Row(session: Session, rs: ResultSet) {
   def int(n: Int): Int = rs.getInt(n)
+  def intOpt(n: Int): Option[Int] = opt(n)(int)
   def long(n: Int): Long = rs.getLong(n)
+  def longOpt(n: Int): Option[Long] = opt(n)(long)
   def float(n: Int): Float = rs.getFloat(n)
+  def floatOpt(n: Int): Option[Float] = opt(n)(float)
   def double(n: Int): Double = rs.getDouble(n)
+  def doubleOpt(n: Int): Option[Double] = opt(n)(double)
   def string(n: Int): String = rs.getString(n)
   def stringOpt(n: Int): Option[String] = opt(n)(string)
   def boolean(n: Int): Boolean = rs.getBoolean(n)
+  def booleanOpt(n: Int): Option[Boolean] = opt(n)(boolean)
   def dateTime(n: Int): DateTime = new DateTime(rs.getTimestamp(n))
   def dateTimeOpt(n: Int): Option[DateTime] = opt(n)(dateTime)
   def any(n: Int): Any = rs.getObject(n)
