@@ -123,15 +123,15 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.stringOpt(6), row.dateTimeOpt(7))
+      row => (row.intOpt(1), row.longOpt(2), row.floatOpt(3), row.doubleOpt(4), row.booleanOpt(5), row.stringOpt(6), row.dateTimeOpt(7))
     }}
 
     assert(result.isDefined)
-    assert(result.get._1 === 0)
-    assert(result.get._2 === 0L)
-    assert(result.get._3 === 0.0)
-    assert(result.get._4 === 0.0)
-    assert(result.get._5 === false)
+    assert(result.get._1 === None)
+    assert(result.get._2 === None)
+    assert(result.get._3 === None)
+    assert(result.get._4 === None)
+    assert(result.get._5 === None)
     assert(result.get._6 === None)
     assert(result.get._7 === None)
   }
