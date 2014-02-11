@@ -202,6 +202,38 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._8 === "abc")
   }
 
+  test("can get values by column name") {
+    prepareTestTable
+    val now = DateTime.now
+    db.withTransaction { session =>
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
+        1, 1L, 1.0, 1.0, true, "abc", now)
+    }
+
+    val result = db.withTransaction { _.selectOne("select * from test") {
+      row => (
+        row.int("c_integer"),
+        row.long("c_long"),
+        row.float("c_float"),
+        row.double("c_double"),
+        row.boolean("c_boolean"),
+        row.string("c_varchar"),
+        row.dateTime("c_timestamp"),
+        row.any("c_varchar")
+      )
+    }}
+
+    assert(result.isDefined)
+    assert(result.get._1 === 1)
+    assert(result.get._2 === 1L)
+    assert(result.get._3 === 1.0)
+    assert(result.get._4 === 1.0)
+    assert(result.get._5 === true)
+    assert(result.get._6 === "abc")
+    assert(result.get._7 === now)
+    assert(result.get._8 === "abc")
+  }
+
   test("can get opt values") {
     prepareTestTable
     val now = DateTime.now
