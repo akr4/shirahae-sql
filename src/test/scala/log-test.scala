@@ -41,17 +41,10 @@ class LogSuite extends FunSuite {
     )
 
     assert(sql ===
-      """|select * from test
-         |where c_int = 1
-         |  and c_long = 2
-         |  and c_float = 3.0
-         |  and c_double = 4.0
-         |  and c_string = 'abc'
-         |  and c_boolean = true
-         |  and c_datetime = '2013-08-16 23:09:00'
-         |  and c_null = null
-         |  and c_none = null
-         |  and c_some = 3""".stripMargin)
+      """select * from test"""
+      + """ where c_int = 1 and c_long = 2 and c_float = 3.0 and c_double = 4.0"""
+      + """ and c_string = 'abc' and c_boolean = true and c_datetime = '2013-08-16 23:09:00'"""
+      + """ and c_null = null and c_none = null and c_some = 3""".stripMargin)
   }
 
   test("generated sql should be valid") {
