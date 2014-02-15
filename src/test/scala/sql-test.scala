@@ -19,10 +19,12 @@ import scala.util.Try
 import com.github.nscala_time.time.Imports._
 import org.scalatest.FunSuite
 import org.scalatest.BeforeAndAfter
+import Imports._
 
 class SqlSuite extends FunSuite with BeforeAndAfter {
 
   val db = Database.forDriver("org.hsqldb.jdbc.JDBCDriver", "jdbc:hsqldb:mem:hsqldb:test")
+
 
   def prepareEmp {
     Try { db.ddl("drop table emp") }
