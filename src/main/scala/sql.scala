@@ -19,10 +19,36 @@ import com.github.nscala_time.time.Imports._
 import java.sql.{ Connection, Statement, PreparedStatement, ResultSet, SQLException }
 import com.typesafe.scalalogging.slf4j.Logging
 
+import scala.language.implicitConversions
+
 class TooManyRowsException(message: String = null, cause: Throwable = null) extends Exception
 
+case class Parameter[A](val value: A)
+
+object Imports {
+  type ConnectionFactory = net.physalis.shirahae.ConnectionFactory
+  val LocalTransactionManager = net.physalis.shirahae.LocalTransactionManager
+  val ErrorTransactionManager = net.physalis.shirahae.ErrorTransactionManager
+  val SimpleSqlLogger = net.physalis.shirahae.SimpleSqlLogger
+  val EmbeddedParameterStyleSqlLogger = net.physalis.shirahae.EmbeddedParameterStyleSqlLogger
+  type Database = net.physalis.shirahae.Database
+  type Row = net.physalis.shirahae.Row
+
+  implicit def convert(x: String) = Parameter(x)
+  implicit def convert(x: Int) = Parameter(x)
+  implicit def convert(x: Long) = Parameter(x)
+  implicit def convert(x: Float) = Parameter(x)
+  implicit def convert(x: Double) = Parameter(x)
+  implicit def convert(x: DateTime) = Parameter(x)
+  implicit def convert(x: Boolean) = Parameter(x)
+  implicit def convert[A](x: Option[A]): Parameter[Option[A]] = x match {
+    case Some(y) => Parameter(Some(y))
+    case None => Parameter(None)
+  }
+}
+
 class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using with Logging {
-  def select[A](sql: String, params: Any*)(f: Iterator[Row] => A): A = {
+  def select[A](sql: String, params: Parameter[_]*)(f: Iterator[Row] => A): A = {
     using(conn.prepareStatement(sql)) { stmt =>
       updateParams(stmt, params: _*)
       sqlLogger.log(sql, params: _*)
@@ -33,7 +59,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
   /** get a row as Option
    * @throws TooManyRowsException in case of more than one rows found
    */
-  def selectOne[A](sql: String, params: Any*)(f: Row => A): Option[A] = {
+  def selectOne[A](sql: String, params: Parameter[_]*)(f: Row => A): Option[A] = {
     select(sql, params: _*) { rows =>
       if (rows.hasNext) {
         val nextRow = f(rows.next)
@@ -46,7 +72,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
   }
 
   /** TODO: support arbitary number of generated keys */
-  def updateWithGeneratedKey(sql: String, params: Any*): Long = {
+  def updateWithGeneratedKey(sql: String, params: Parameter[_]*): Long = {
     using(conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) { stmt =>
       updateParams(stmt, params: _*)
       sqlLogger.log(sql, params: _*)
@@ -61,7 +87,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
     }
   }
 
-  def update(sql: String, params: Any*) {
+  def update(sql: String, params: Parameter[_]*) {
     using(conn.prepareStatement(sql)) { stmt =>
       updateParams(stmt, params: _*)
       sqlLogger.log(sql, params: _*)
@@ -70,31 +96,35 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
     }
   }
 
-  private def updateParams(stmt: PreparedStatement, params: Any*) {
+  private def updateParams(stmt: PreparedStatement, params: Parameter[_]*) {
     for ((param, position) <- params.zip(Stream.iterate(1)(_ + 1))) {
       updateParam(stmt, param, position)
     }
   }
 
   @annotation.tailrec
-  private def updateParam(stmt: PreparedStatement, param: Any, position: Int) {
+  private def updateParam(stmt: PreparedStatement, param: Parameter[_], position: Int) {
     def setNull(stmt: PreparedStatement, position: Int) {
       stmt.setNull(position, stmt.getParameterMetaData.getParameterType(position))
     }
-    param match {
-      case Some(x) => updateParam(stmt, x, position)
-      case None => setNull(stmt, position)
-      case null => setNull(stmt, position)
-      case p: String => stmt.setString(position, p)
-      case p: Int => stmt.setInt(position, p)
-      case p: Long => stmt.setLong(position, p)
-      case p: Float => stmt.setFloat(position, p)
-      case p: Double => stmt.setDouble(position, p)
-      case p: DateTime => stmt.setTimestamp(position, new java.sql.Timestamp(p.getMillis))
-      case p: Boolean => stmt.setBoolean(position, p)
-      case x =>
-        val className = x.getClass.getName
-        throw new IllegalArgumentException(s"unsupported type: ${className} ${x}")
+
+    if (param == null) {
+      setNull(stmt, position)
+    } else {
+      param match {
+        case Parameter(Some(x)) => updateParam(stmt, new Parameter(x), position)
+        case Parameter(None) => setNull(stmt, position)
+        case Parameter(p: String) => stmt.setString(position, p)
+        case Parameter(p: Int) => stmt.setInt(position, p)
+        case Parameter(p: Long) => stmt.setLong(position, p)
+        case Parameter(p: Float) => stmt.setFloat(position, p)
+        case Parameter(p: Double) => stmt.setDouble(position, p)
+        case Parameter(p: DateTime) => stmt.setTimestamp(position, new java.sql.Timestamp(p.getMillis))
+        case Parameter(p: Boolean) => stmt.setBoolean(position, p)
+        case Parameter(x) =>
+          val className = x.getClass.getName
+          throw new IllegalArgumentException(s"unsupported type: ${className} ${x}")
+      }
     }
   }
 }
