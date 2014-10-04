@@ -16,7 +16,7 @@
 package net.physalis.shirahae
 
 import scala.util.control.Exception._
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 
 trait TransactionManager {
   def withTransaction[A](cf: ConnectionFactory, f: Session => A)(implicit sqlLogger: SqlLogger): A
@@ -32,7 +32,7 @@ object ErrorTransactionManager extends TransactionManager {
 }
 
 /** TransactionManager which use Connection.commit/rollback */
-object LocalTransactionManager extends TransactionManager with Logging {
+object LocalTransactionManager extends TransactionManager with LazyLogging {
   val underlyingSession = new ThreadLocal[Option[Session]] {
     override def initialValue = None
   }

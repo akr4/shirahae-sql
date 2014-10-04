@@ -5,10 +5,10 @@ object MyBuild extends Build {
 
   lazy val main = Project("shirahae-sql", file("."),
     settings = Defaults.defaultSettings ++ Seq(
-      version := "0.15",
+      version := "0.16-SNAPSHOT",
       organization := "net.physalis",
-      crossScalaVersions := Seq("2.10.2"),
-      scalaVersion := "2.10.2",
+      crossScalaVersions := Seq("2.10.2", "2.11.2"),
+      scalaVersion := "2.11.2",
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       resolvers ++= Seq(
         "typesafe" at "http://repo.typesafe.com/typesafe/releases/"
@@ -20,10 +20,10 @@ object MyBuild extends Build {
       },
       publishMavenStyle := true,
       libraryDependencies := Seq(
-        "org.slf4j" % "slf4j-api" % "1.7.5",
-        "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-        "com.github.nscala-time" %% "nscala-time" % "0.4.2",
-        "org.scalatest" %% "scalatest" % "1.9.1" % "test",
+        //"org.slf4j" % "slf4j-api" % "1.7.5",
+        "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
+        "com.github.nscala-time" %% "nscala-time" % "1.4.0",
+        "org.scalatest" %% "scalatest" % "2.2.1" % "test",
         "org.mockito" % "mockito-core" % "1.9.5" % "test",
         "org.hsqldb" % "hsqldb" % "2.2.9" % "test",
         "ch.qos.logback" % "logback-classic" % "1.0.12" % "test",
