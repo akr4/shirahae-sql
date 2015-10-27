@@ -7,8 +7,8 @@ object MyBuild extends Build {
     settings = Defaults.defaultSettings ++ Seq(
       version := "0.16",
       organization := "net.physalis",
-      crossScalaVersions := Seq("2.10.2", "2.11.2"),
-      scalaVersion := "2.11.2",
+      crossScalaVersions := Seq("2.11.7"),
+      scalaVersion := "2.11.7",
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       resolvers ++= Seq(
         "typesafe" at "http://repo.typesafe.com/typesafe/releases/"
