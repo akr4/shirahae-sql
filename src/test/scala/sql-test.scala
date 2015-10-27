@@ -162,9 +162,10 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
 
   test("can insert none") {
     prepareTestTable
+    // StackOverFlowError in compilation without explicit type declaration (Scala 2.11.2)
     db.withTransaction { session =>
       session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
-        None, None, None, None, None, None, None)
+        None: Option[Int], None: Option[Long], None: Option[Float], None: Option[Double], None: Option[Boolean], None: Option[String], None: Option[DateTime])
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
