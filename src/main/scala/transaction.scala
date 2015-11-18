@@ -47,18 +47,18 @@ object LocalTransactionManager extends TransactionManager with LazyLogging {
         underlyingSession.set(Some(session))
         try {
           val result = f(session)
-          logger.debug("commiting transaction")
-          conn.commit
+          logger.debug("committing transaction")
+          conn.commit()
           result
         } catch {
           case e: Throwable =>
             logger.debug("rolling back transaction")
-            allCatch { conn.rollback }
+            allCatch { conn.rollback() }
           throw e
         } finally {
           logger.debug("closing connection")
-          allCatch { conn.close }
-          underlyingSession.remove
+          allCatch { conn.close() }
+          underlyingSession.remove()
         }
     }
   }

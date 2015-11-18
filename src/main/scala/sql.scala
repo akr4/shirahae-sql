@@ -15,8 +15,9 @@
  */
 package net.physalis.shirahae
 
+import java.sql.{Connection, PreparedStatement, ResultSet, Statement}
+
 import com.github.nscala_time.time.Imports._
-import java.sql.{ Connection, Statement, PreparedStatement, ResultSet, SQLException }
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.language.implicitConversions

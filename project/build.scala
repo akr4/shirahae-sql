@@ -20,7 +20,6 @@ object MyBuild extends Build {
       },
       publishMavenStyle := true,
       libraryDependencies := Seq(
-        //"org.slf4j" % "slf4j-api" % "1.7.5",
         "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
         "com.github.nscala-time" %% "nscala-time" % "1.4.0",
         "org.scalatest" %% "scalatest" % "2.2.1" % "test",
