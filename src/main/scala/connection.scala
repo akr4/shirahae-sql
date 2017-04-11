@@ -17,7 +17,7 @@ package net.physalis.shirahae
 
 import java.sql.{ Connection, Driver, DriverManager }
 import javax.sql.DataSource
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 
 
 abstract class ConnectionFactory {
@@ -29,7 +29,7 @@ class JdbcDriverConnectionFactory (
   url: String,
   username: String,
   password: String
-) extends ConnectionFactory with Logging {
+) extends ConnectionFactory with LazyLogging {
 
   Class.forName(driverClassName)
 

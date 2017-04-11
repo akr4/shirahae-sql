@@ -15,21 +15,21 @@
  */
 package net.physalis.shirahae
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import com.github.nscala_time.time.Imports._
 
 trait SqlLogger {
   def log(sql: String, params: Any*)
 }
 
-object SimpleSqlLogger extends SqlLogger with Logging {
+object SimpleSqlLogger extends SqlLogger with LazyLogging {
   def log(sql: String, params: Any*) {
     val s = (sql :: params.zipWithIndex.map { x => s"${x._2 + 1}: ${x._1}" }.toList).mkString("\n")
     logger.debug(s)
   }
 }
 
-object EmbeddedParameterStyleSqlLogger extends SqlLogger with Logging {
+object EmbeddedParameterStyleSqlLogger extends SqlLogger with LazyLogging {
   val R = """\?""".r
   val lineBreakR = """\n""".r
   val spaceR = """\s+""".r

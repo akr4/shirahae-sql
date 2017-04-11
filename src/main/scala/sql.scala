@@ -15,9 +15,10 @@
  */
 package net.physalis.shirahae
 
+import java.sql.{Connection, PreparedStatement, ResultSet, Statement}
+
 import com.github.nscala_time.time.Imports._
-import java.sql.{ Connection, Statement, PreparedStatement, ResultSet, SQLException }
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.language.implicitConversions
 
@@ -47,7 +48,7 @@ object Imports {
   }
 }
 
-class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using with Logging {
+class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using with LazyLogging {
   def select[A](sql: String, params: Parameter[_]*)(f: Iterator[Row] => A): A = {
     using(conn.prepareStatement(sql)) { stmt =>
       updateParams(stmt, params: _*)
