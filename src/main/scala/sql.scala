@@ -88,6 +88,24 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
     }
   }
 
+  def updateWithMaybeGeneratedKey(sql: String, params: Parameter[_]*): Option[Long] = {
+    using(conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) { stmt =>
+      updateParams(stmt, params: _*)
+      sqlLogger.log(sql, params: _*)
+
+      stmt.executeUpdate()
+      using(stmt.getGeneratedKeys) { rs =>
+        if (rs.next()) {
+          val id = rs.getLong(1)
+          logger.debug(s"generated ID: ${id}")
+          Some(id)
+        } else {
+          None
+        }
+      }
+    }
+  }
+
   def update(sql: String, params: Parameter[_]*) {
     using(conn.prepareStatement(sql)) { stmt =>
       updateParams(stmt, params: _*)
