@@ -18,6 +18,7 @@ package net.physalis.shirahae
 import scala.util.Try
 import org.scalatest.FunSuite
 import org.mockito.Mockito._
+import Imports._
 
 import com.github.nscala_time.time.Imports._
 
