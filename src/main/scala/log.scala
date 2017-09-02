@@ -17,6 +17,7 @@ package net.physalis.shirahae
 
 import com.typesafe.scalalogging.LazyLogging
 import com.github.nscala_time.time.Imports._
+import net.physalis.shirahae.EmbeddedParameterStyleSqlLogger.replace
 
 trait SqlLogger {
   def log(sql: String, params: Parameter[_]*)
@@ -31,13 +32,18 @@ object SimpleSqlLogger extends SqlLogger with LazyLogging {
 
 object EmbeddedParameterStyleSqlLogger extends SqlLogger with LazyLogging {
   val R = """\?""".r
+  val lineBreakR = """\n""".r
+  val spaceR = """\s+""".r
 
   def log(sql: String, params: Parameter[_]*) {
     logger.debug(createMessage(sql, params.toList))
   }
 
-  def createMessage(sql: String, params: List[Parameter[_]]): String = {
-    replace(sql, params)
+  protected [shirahae] def createMessage(sql: String, params: List[Parameter[_]]): String = {
+    val s1 = lineBreakR.replaceAllIn(sql, " ")
+    val s2 = spaceR.replaceAllIn(s1, " ")
+
+    replace(s2, params)
   }
 
   @annotation.tailrec
