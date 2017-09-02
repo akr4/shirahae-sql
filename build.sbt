@@ -2,14 +2,14 @@ lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "net.physalis",
-      scalaVersion := "2.12.1",
-      crossScalaVersions := Seq("2.11.8", "2.12.1"),
-      version := "0.17",
+      scalaVersion := "2.12.3",
+      crossScalaVersions := Seq("2.11.8", "2.12.3"),
+      version := "0.18",
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       resolvers ++= Seq(
         "typesafe" at "http://repo.typesafe.com/typesafe/releases/"
       ),
-      publishTo <<= (version) { version: String =>
+      publishTo <<= version { version: String =>
         val local = Path("target/publish")
         val path = local / (if (version.trim.endsWith("SNAPSHOT")) "snapshots" else "releases")
         Some(Resolver.file("Github Pages", path)(Patterns(true, Resolver.mavenStyleBasePattern)))
@@ -27,4 +27,3 @@ lazy val root = (project in file(".")).
       "org.codehaus.groovy" % "groovy" % "2.1.3" % "test"
     )
   )
-

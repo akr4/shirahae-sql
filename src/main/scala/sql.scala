@@ -16,15 +16,16 @@
 package net.physalis.shirahae
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Statement}
+import java.time.LocalDateTime
 
-import com.github.nscala_time.time.Imports._
+import com.github.nscala_time.time.{Imports => NST}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.language.implicitConversions
 
 class TooManyRowsException(message: String = null, cause: Throwable = null) extends Exception
 
-case class Parameter[A](val value: A)
+case class Parameter[A](value: A)
 
 object Imports {
   type ConnectionFactory = net.physalis.shirahae.ConnectionFactory
@@ -40,7 +41,8 @@ object Imports {
   implicit def convert(x: Long) = Parameter(x)
   implicit def convert(x: Float) = Parameter(x)
   implicit def convert(x: Double) = Parameter(x)
-  implicit def convert(x: DateTime) = Parameter(x)
+  implicit def convert(x: NST.DateTime) = Parameter(x)
+  implicit def convert(x: LocalDateTime) = Parameter(x)
   implicit def convert(x: Boolean) = Parameter(x)
   implicit def convert[A](x: Option[A]): Parameter[Option[A]] = x match {
     case Some(y) => Parameter(Some(y))
@@ -82,8 +84,26 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
       using(stmt.getGeneratedKeys) { rs =>
         rs.next()
         val id = rs.getLong(1)
-        logger.debug(s"generated ID: ${id}")
+        logger.debug(s"generated ID: $id")
         id
+      }
+    }
+  }
+
+  def updateWithMaybeGeneratedKey(sql: String, params: Parameter[_]*): Option[Long] = {
+    using(conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) { stmt =>
+      updateParams(stmt, params: _*)
+      sqlLogger.log(sql, params: _*)
+
+      stmt.executeUpdate()
+      using(stmt.getGeneratedKeys) { rs =>
+        if (rs.next()) {
+          val id = rs.getLong(1)
+          logger.debug(s"generated ID: $id")
+          Some(id)
+        } else {
+          None
+        }
       }
     }
   }
@@ -113,18 +133,19 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
       setNull(stmt, position)
     } else {
       param match {
-        case Parameter(Some(x)) => updateParam(stmt, new Parameter(x), position)
+        case Parameter(Some(x)) => updateParam(stmt, Parameter(x), position)
         case Parameter(None) => setNull(stmt, position)
         case Parameter(p: String) => stmt.setString(position, p)
         case Parameter(p: Int) => stmt.setInt(position, p)
         case Parameter(p: Long) => stmt.setLong(position, p)
         case Parameter(p: Float) => stmt.setFloat(position, p)
         case Parameter(p: Double) => stmt.setDouble(position, p)
-        case Parameter(p: DateTime) => stmt.setTimestamp(position, new java.sql.Timestamp(p.getMillis))
+        case Parameter(p: NST.DateTime) => stmt.setTimestamp(position, new java.sql.Timestamp(p.getMillis))
+        case Parameter(p: LocalDateTime) => stmt.setTimestamp(position, java.sql.Timestamp.valueOf(p))
         case Parameter(p: Boolean) => stmt.setBoolean(position, p)
         case Parameter(x) =>
           val className = x.getClass.getName
-          throw new IllegalArgumentException(s"unsupported type: ${className} ${x}")
+          throw new IllegalArgumentException(s"unsupported type: $className $x")
       }
     }
   }
@@ -155,10 +176,14 @@ class Row(session: Session, rs: ResultSet) {
   def boolean(c: String): Boolean = rs.getBoolean(c)
   def booleanOpt(n: Int): Option[Boolean] = opt(n)(boolean)
   def booleanOpt(c: String): Option[Boolean] = opt(c)(boolean)
-  def dateTime(n: Int): DateTime = new DateTime(rs.getTimestamp(n))
-  def dateTime(c: String): DateTime = new DateTime(rs.getTimestamp(c))
-  def dateTimeOpt(n: Int): Option[DateTime] = opt(n)(dateTime)
-  def dateTimeOpt(c: String): Option[DateTime] = opt(c)(dateTime)
+  def dateTime(n: Int): NST.DateTime = new NST.DateTime(rs.getTimestamp(n))
+  def dateTime(c: String): NST.DateTime = new NST.DateTime(rs.getTimestamp(c))
+  def dateTimeOpt(n: Int): Option[NST.DateTime] = opt(n)(dateTime)
+  def dateTimeOpt(c: String): Option[NST.DateTime] = opt(c)(dateTime)
+  def localDateTime(n: Int): LocalDateTime = Option(rs.getTimestamp(n)).map(_.toLocalDateTime).orNull
+  def localDateTime(c: String): LocalDateTime = Option(rs.getTimestamp(c)).map(_.toLocalDateTime).orNull
+  def localDateTimeOpt(n: Int): Option[LocalDateTime] = opt(n)(localDateTime)
+  def localDateTimeOpt(c: String): Option[LocalDateTime] = opt(c)(localDateTime)
   def any(n: Int): Any = rs.getObject(n)
   def any(c: String): Any = rs.getObject(c)
   def anyOpt(n: Int): Option[Any] = opt(n)(any)

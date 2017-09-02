@@ -17,13 +17,14 @@ package net.physalis.shirahae
 
 import com.typesafe.scalalogging.LazyLogging
 import com.github.nscala_time.time.Imports._
+import net.physalis.shirahae.EmbeddedParameterStyleSqlLogger.replace
 
 trait SqlLogger {
-  def log(sql: String, params: Any*)
+  def log(sql: String, params: Parameter[_]*)
 }
 
 object SimpleSqlLogger extends SqlLogger with LazyLogging {
-  def log(sql: String, params: Any*) {
+  def log(sql: String, params: Parameter[_]*) {
     val s = (sql :: params.zipWithIndex.map { x => s"${x._2 + 1}: ${x._1}" }.toList).mkString("\n")
     logger.debug(s)
   }
@@ -34,11 +35,11 @@ object EmbeddedParameterStyleSqlLogger extends SqlLogger with LazyLogging {
   val lineBreakR = """\n""".r
   val spaceR = """\s+""".r
 
-  def log(sql: String, params: Any*) {
+  def log(sql: String, params: Parameter[_]*) {
     logger.debug(createMessage(sql, params.toList))
   }
 
-  protected [shirahae] def createMessage(sql: String, params: List[Any]): String = {
+  protected [shirahae] def createMessage(sql: String, params: List[Parameter[_]]): String = {
     val s1 = lineBreakR.replaceAllIn(sql, " ")
     val s2 = spaceR.replaceAllIn(s1, " ")
 
@@ -46,7 +47,7 @@ object EmbeddedParameterStyleSqlLogger extends SqlLogger with LazyLogging {
   }
 
   @annotation.tailrec
-  private def replace(s: String, params: List[Any]): String = {
+  private def replace(s: String, params: List[Parameter[_]]): String = {
     params match {
       case p :: ps => {
         val replaced = R.replaceFirstIn(s, expr(p))
@@ -60,6 +61,7 @@ object EmbeddedParameterStyleSqlLogger extends SqlLogger with LazyLogging {
   private def expr(param: Any): String = {
     param match {
       case null => "null"
+      case p: Parameter[_] => expr(p.value)
       case None => "null"
       case Some(p) => expr(p)
       case p: String => "'" + p + "'"
