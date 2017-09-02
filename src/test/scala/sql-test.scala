@@ -15,8 +15,10 @@
  */
 package net.physalis.shirahae
 
+import java.time.LocalDateTime
+
 import scala.util.Try
-import com.github.nscala_time.time.Imports._
+import com.github.nscala_time.time.{Imports => NST}
 import org.scalatest.FunSuite
 import org.scalatest.BeforeAndAfter
 import Imports._
@@ -45,7 +47,8 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
         |  c_double double,
         |  c_boolean boolean,
         |  c_varchar varchar(10),
-        |  c_timestamp timestamp
+        |  c_timestamp1 timestamp,
+        |  c_timestamp2 timestamp
         |)""".stripMargin)
   }
 
@@ -121,11 +124,11 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
   test("can insert null") {
     prepareTestTable
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)", null, null, null, null, null, null, null)
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?)", null, null, null, null, null, null, null, null)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.intOpt(1), row.longOpt(2), row.floatOpt(3), row.doubleOpt(4), row.booleanOpt(5), row.stringOpt(6), row.dateTimeOpt(7))
+      row => (row.intOpt(1), row.longOpt(2), row.floatOpt(3), row.doubleOpt(4), row.booleanOpt(5), row.stringOpt(6), row.dateTimeOpt(7), row.localDateTimeOpt(8))
     }}
 
     assert(result.isDefined)
@@ -136,18 +139,20 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._5 === None)
     assert(result.get._6 === None)
     assert(result.get._7 === None)
+    assert(result.get._8 === None)
   }
 
   test("can insert some") {
     prepareTestTable
-    val now = DateTime.now
+    val nstNow = NST.DateTime.now
+    val jtNow = LocalDateTime.now
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
-        Some(1), Some(1L), Some(1.0), Some(1.0), Some(true), Some("abc"), Some(now))
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?)",
+        Some(1), Some(1L), Some(1.0), Some(1.0), Some(true), Some("abc"), Some(nstNow), Some(jtNow))
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.stringOpt(6), row.dateTimeOpt(7))
+      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.stringOpt(6), row.dateTimeOpt(7), row.localDateTimeOpt(8))
     }}
 
     assert(result.isDefined)
@@ -157,19 +162,20 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._4 === 1.0)
     assert(result.get._5 === true)
     assert(result.get._6 === Some("abc"))
-    assert(result.get._7 === Some(now))
+    assert(result.get._7 === Some(nstNow))
+    assert(result.get._8 === Some(jtNow))
   }
 
   test("can insert none") {
     prepareTestTable
     // StackOverFlowError in compilation without explicit type declaration (Scala 2.11.2)
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
-        None: Option[Int], None: Option[Long], None: Option[Float], None: Option[Double], None: Option[Boolean], None: Option[String], None: Option[DateTime])
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?)",
+        None: Option[Int], None: Option[Long], None: Option[Float], None: Option[Double], None: Option[Boolean], None: Option[String], None: Option[NST.DateTime], None: Option[LocalDateTime])
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.stringOpt(6), row.dateTimeOpt(7))
+      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.stringOpt(6), row.dateTimeOpt(7), row.localDateTimeOpt(8))
     }}
 
     assert(result.isDefined)
@@ -180,18 +186,20 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._5 === false)
     assert(result.get._6 === None)
     assert(result.get._7 === None)
+    assert(result.get._8 === None)
   }
 
   test("can get values") {
     prepareTestTable
-    val now = DateTime.now
+    val nstNow = NST.DateTime.now
+    val jtNow = LocalDateTime.now
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
-        1, 1L, 1.0, 1.0, true, "abc", now)
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?)",
+        1, 1L, 1.0, 1.0, true, "abc", nstNow, jtNow)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
-      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.string(6), row.dateTime(7), row.any(6))
+      row => (row.int(1), row.long(2), row.float(3), row.double(4), row.boolean(5), row.string(6), row.dateTime(7), row.any(6), row.localDateTime(8))
     }}
 
     assert(result.isDefined)
@@ -201,16 +209,18 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._4 === 1.0)
     assert(result.get._5 === true)
     assert(result.get._6 === "abc")
-    assert(result.get._7 === now)
+    assert(result.get._7 === nstNow)
     assert(result.get._8 === "abc")
+    assert(result.get._9 === jtNow)
   }
 
   test("can get values by column name") {
     prepareTestTable
-    val now = DateTime.now
+    val nstNow = NST.DateTime.now
+    val jtNow = LocalDateTime.now
     db.withTransaction { session =>
-      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?)",
-        1, 1L, 1.0, 1.0, true, "abc", now)
+      session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?)",
+        1, 1L, 1.0, 1.0, true, "abc", nstNow, jtNow)
     }
 
     val result = db.withTransaction { _.selectOne("select * from test") {
@@ -221,8 +231,9 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
         row.double("c_double"),
         row.boolean("c_boolean"),
         row.string("c_varchar"),
-        row.dateTime("c_timestamp"),
-        row.any("c_varchar")
+        row.dateTime("c_timestamp1"),
+        row.any("c_varchar"),
+        row.localDateTime("c_timestamp2")
       )
     }}
 
@@ -233,18 +244,19 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._4 === 1.0)
     assert(result.get._5 === true)
     assert(result.get._6 === "abc")
-    assert(result.get._7 === now)
+    assert(result.get._7 === nstNow)
     assert(result.get._8 === "abc")
+    assert(result.get._9 === jtNow)
   }
 
   test("can get opt values") {
     prepareTestTable
-    val now = DateTime.now
+    val now = NST.DateTime.now
     db.withTransaction { session =>
-      session.update("insert into test (c_varchar, c_timestamp) values (?, ?)", "abc", now)
+      session.update("insert into test (c_varchar, c_timestamp1) values (?, ?)", "abc", now)
     }
 
-    val result = db.withTransaction { _.selectOne("select c_varchar, c_timestamp from test") {
+    val result = db.withTransaction { _.selectOne("select c_varchar, c_timestamp1 from test") {
       row => (row.stringOpt(1), row.dateTimeOpt(2), row.anyOpt(1))
     }}
 
@@ -254,4 +266,3 @@ class SqlSuite extends FunSuite with BeforeAndAfter {
     assert(result.get._3 === Some("abc"))
   }
 }
-
