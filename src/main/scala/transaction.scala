@@ -52,7 +52,7 @@ object LocalTransactionManager extends TransactionManager with LazyLogging {
           result
         } catch {
           case e: Throwable =>
-            logger.debug("rolling back transaction")
+            logger.debug("rolling back transaction", e)
             allCatch { conn.rollback() }
           throw e
         } finally {
