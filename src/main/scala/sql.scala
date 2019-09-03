@@ -16,7 +16,7 @@
 package net.physalis.shirahae
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Statement}
-import java.time.LocalDateTime
+import java.time.{Instant, LocalDateTime, ZonedDateTime}
 
 import com.github.nscala_time.time.{Imports => NST}
 import com.typesafe.scalalogging.LazyLogging
@@ -29,21 +29,22 @@ case class Parameter[A](value: A)
 
 object Imports {
   type ConnectionFactory = net.physalis.shirahae.ConnectionFactory
-  val LocalTransactionManager = net.physalis.shirahae.LocalTransactionManager
-  val ErrorTransactionManager = net.physalis.shirahae.ErrorTransactionManager
-  val SimpleSqlLogger = net.physalis.shirahae.SimpleSqlLogger
-  val EmbeddedParameterStyleSqlLogger = net.physalis.shirahae.EmbeddedParameterStyleSqlLogger
+  val LocalTransactionManager: net.physalis.shirahae.LocalTransactionManager.type = net.physalis.shirahae.LocalTransactionManager
+  val ErrorTransactionManager: net.physalis.shirahae.ErrorTransactionManager.type = net.physalis.shirahae.ErrorTransactionManager
+  val SimpleSqlLogger: net.physalis.shirahae.SimpleSqlLogger.type = net.physalis.shirahae.SimpleSqlLogger
+  val EmbeddedParameterStyleSqlLogger: net.physalis.shirahae.EmbeddedParameterStyleSqlLogger.type = net.physalis.shirahae.EmbeddedParameterStyleSqlLogger
   type Database = net.physalis.shirahae.Database
   type Row = net.physalis.shirahae.Row
 
-  implicit def convert(x: String) = Parameter(x)
-  implicit def convert(x: Int) = Parameter(x)
-  implicit def convert(x: Long) = Parameter(x)
-  implicit def convert(x: Float) = Parameter(x)
-  implicit def convert(x: Double) = Parameter(x)
-  implicit def convert(x: NST.DateTime) = Parameter(x)
-  implicit def convert(x: LocalDateTime) = Parameter(x)
-  implicit def convert(x: Boolean) = Parameter(x)
+  implicit def convert(x: String): Parameter[String] = Parameter(x)
+  implicit def convert(x: Int): Parameter[Int] = Parameter(x)
+  implicit def convert(x: Long): Parameter[Long] = Parameter(x)
+  implicit def convert(x: Float): Parameter[Float] = Parameter(x)
+  implicit def convert(x: Double): Parameter[Double] = Parameter(x)
+  implicit def convert(x: NST.DateTime): Parameter[NST.DateTime] = Parameter(x)
+  implicit def convert(x: LocalDateTime): Parameter[LocalDateTime] = Parameter(x)
+  implicit def convert(x: Instant): Parameter[Instant] = Parameter(x)
+  implicit def convert(x: Boolean): Parameter[Boolean] = Parameter(x)
   implicit def convert[A](x: Option[A]): Parameter[Option[A]] = x match {
     case Some(y) => Parameter(Some(y))
     case None => Parameter(None)
@@ -142,6 +143,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
         case Parameter(p: Double) => stmt.setDouble(position, p)
         case Parameter(p: NST.DateTime) => stmt.setTimestamp(position, new java.sql.Timestamp(p.getMillis))
         case Parameter(p: LocalDateTime) => stmt.setTimestamp(position, java.sql.Timestamp.valueOf(p))
+        case Parameter(p: Instant) => stmt.setTimestamp(position, java.sql.Timestamp.from(p))
         case Parameter(p: Boolean) => stmt.setBoolean(position, p)
         case Parameter(x) =>
           val className = x.getClass.getName
@@ -184,6 +186,10 @@ class Row(session: Session, rs: ResultSet) {
   def localDateTime(c: String): LocalDateTime = Option(rs.getTimestamp(c)).map(_.toLocalDateTime).orNull
   def localDateTimeOpt(n: Int): Option[LocalDateTime] = opt(n)(localDateTime)
   def localDateTimeOpt(c: String): Option[LocalDateTime] = opt(c)(localDateTime)
+  def instant(n: Int): Instant = Option(rs.getTimestamp(n)).map(_.toInstant).orNull
+  def instant(c: String): Instant = Option(rs.getTimestamp(c)).map(_.toInstant).orNull
+  def instantOpt(n: Int): Option[Instant] = opt(n)(instant)
+  def instantOpt(c: String): Option[Instant] = opt(c)(instant)
   def any(n: Int): Any = rs.getObject(n)
   def any(c: String): Any = rs.getObject(c)
   def anyOpt(n: Int): Option[Any] = opt(n)(any)
