@@ -29,21 +29,21 @@ case class Parameter[A](value: A)
 
 object Imports {
   type ConnectionFactory = net.physalis.shirahae.ConnectionFactory
-  val LocalTransactionManager = net.physalis.shirahae.LocalTransactionManager
-  val ErrorTransactionManager = net.physalis.shirahae.ErrorTransactionManager
-  val SimpleSqlLogger = net.physalis.shirahae.SimpleSqlLogger
-  val EmbeddedParameterStyleSqlLogger = net.physalis.shirahae.EmbeddedParameterStyleSqlLogger
+  val LocalTransactionManager: net.physalis.shirahae.LocalTransactionManager.type = net.physalis.shirahae.LocalTransactionManager
+  val ErrorTransactionManager: net.physalis.shirahae.ErrorTransactionManager.type = net.physalis.shirahae.ErrorTransactionManager
+  val SimpleSqlLogger: net.physalis.shirahae.SimpleSqlLogger.type = net.physalis.shirahae.SimpleSqlLogger
+  val EmbeddedParameterStyleSqlLogger: net.physalis.shirahae.EmbeddedParameterStyleSqlLogger.type = net.physalis.shirahae.EmbeddedParameterStyleSqlLogger
   type Database = net.physalis.shirahae.Database
   type Row = net.physalis.shirahae.Row
 
-  implicit def convert(x: String) = Parameter(x)
-  implicit def convert(x: Int) = Parameter(x)
-  implicit def convert(x: Long) = Parameter(x)
-  implicit def convert(x: Float) = Parameter(x)
-  implicit def convert(x: Double) = Parameter(x)
-  implicit def convert(x: NST.DateTime) = Parameter(x)
-  implicit def convert(x: LocalDateTime) = Parameter(x)
-  implicit def convert(x: Boolean) = Parameter(x)
+  implicit def convert(x: String): Parameter[String] = Parameter(x)
+  implicit def convert(x: Int): Parameter[Int] = Parameter(x)
+  implicit def convert(x: Long): Parameter[Long] = Parameter(x)
+  implicit def convert(x: Float): Parameter[Float] = Parameter(x)
+  implicit def convert(x: Double): Parameter[Double] = Parameter(x)
+  implicit def convert(x: NST.DateTime): Parameter[NST.DateTime] = Parameter(x)
+  implicit def convert(x: LocalDateTime): Parameter[LocalDateTime] = Parameter(x)
+  implicit def convert(x: Boolean): Parameter[Boolean] = Parameter(x)
   implicit def convert[A](x: Option[A]): Parameter[Option[A]] = x match {
     case Some(y) => Parameter(Some(y))
     case None => Parameter(None)
