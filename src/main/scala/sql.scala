@@ -109,7 +109,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
     }
   }
 
-  def update(sql: String, params: Parameter[_]*) {
+  def update(sql: String, params: Parameter[_]*): Int = {
     using(conn.prepareStatement(sql)) { stmt =>
       updateParams(stmt, params: _*)
       sqlLogger.log(sql, params: _*)
