@@ -16,8 +16,7 @@
 package net.physalis.shirahae
 
 import java.sql.{Connection, PreparedStatement, ResultSet, Statement}
-import java.time.{Instant, LocalDateTime, ZonedDateTime}
-
+import java.time.{Instant, LocalDate, LocalDateTime}
 import com.github.nscala_time.time.{Imports => NST}
 import com.typesafe.scalalogging.LazyLogging
 
@@ -182,6 +181,10 @@ class Row(session: Session, rs: ResultSet) {
   def dateTime(c: String): NST.DateTime = new NST.DateTime(rs.getTimestamp(c))
   def dateTimeOpt(n: Int): Option[NST.DateTime] = opt(n)(dateTime)
   def dateTimeOpt(c: String): Option[NST.DateTime] = opt(c)(dateTime)
+  def localDate(n: Int): LocalDate = Option(rs.getTimestamp(n)).map(_.toLocalDateTime.toLocalDate).orNull
+  def localDate(c: String): LocalDate = Option(rs.getTimestamp(c)).map(_.toLocalDateTime.toLocalDate).orNull
+  def localDateOpt(n: Int): Option[LocalDate] = opt(n)(localDate)
+  def localDateOpt(c: String): Option[LocalDate] = opt(c)(localDate)
   def localDateTime(n: Int): LocalDateTime = Option(rs.getTimestamp(n)).map(_.toLocalDateTime).orNull
   def localDateTime(c: String): LocalDateTime = Option(rs.getTimestamp(c)).map(_.toLocalDateTime).orNull
   def localDateTimeOpt(n: Int): Option[LocalDateTime] = opt(n)(localDateTime)
