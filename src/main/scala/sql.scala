@@ -41,6 +41,7 @@ object Imports {
   implicit def convert(x: Float): Parameter[Float] = Parameter(x)
   implicit def convert(x: Double): Parameter[Double] = Parameter(x)
   implicit def convert(x: NST.DateTime): Parameter[NST.DateTime] = Parameter(x)
+  implicit def convert(x: LocalDate): Parameter[LocalDate] = Parameter(x)
   implicit def convert(x: LocalDateTime): Parameter[LocalDateTime] = Parameter(x)
   implicit def convert(x: Instant): Parameter[Instant] = Parameter(x)
   implicit def convert(x: Boolean): Parameter[Boolean] = Parameter(x)
