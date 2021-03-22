@@ -141,6 +141,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
         case Parameter(p: Float) => stmt.setFloat(position, p)
         case Parameter(p: Double) => stmt.setDouble(position, p)
         case Parameter(p: NST.DateTime) => stmt.setTimestamp(position, new java.sql.Timestamp(p.getMillis))
+        case Parameter(p: LocalDate) => stmt.setTimestamp(position, java.sql.Timestamp.valueOf(p.atStartOfDay()))
         case Parameter(p: LocalDateTime) => stmt.setTimestamp(position, java.sql.Timestamp.valueOf(p))
         case Parameter(p: Instant) => stmt.setTimestamp(position, java.sql.Timestamp.from(p))
         case Parameter(p: Boolean) => stmt.setBoolean(position, p)
