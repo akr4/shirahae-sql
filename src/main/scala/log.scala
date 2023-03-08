@@ -71,3 +71,21 @@ object EmbeddedParameterStyleSqlLogger extends SqlLogger with LazyLogging {
   }
 
 }
+
+class CombinedLogger(loggers: SqlLogger*) extends SqlLogger with LazyLogging {
+  def log(sql: String, params: Parameter[_]*): Unit = {
+    loggers.foreach(_.log(sql, params: _*))
+  }
+}
+
+object StatementOnlyLogger extends SqlLogger with LazyLogging {
+  private val lineBreakR = """\n""".r
+  private val spaceR = """\s+""".r
+
+  def log(sql: String, params: Parameter[_]*): Unit = {
+    val s1 = lineBreakR.replaceAllIn(sql, " ")
+    val s2 = spaceR.replaceAllIn(s1, " ")
+
+    logger.debug(s2)
+  }
+}
