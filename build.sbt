@@ -7,11 +7,11 @@ lazy val root = (project in file(".")).
       version := "0.24",
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       resolvers ++= Seq(
-        "typesafe" at "http://repo.typesafe.com/typesafe/releases/"
+        "typesafe" at "https://repo.typesafe.com/typesafe/releases/"
       ),
-      publishTo <<= version { version: String =>
+      publishTo := {
         val local = Path("target/publish")
-        val path = local / (if (version.trim.endsWith("SNAPSHOT")) "snapshots" else "releases")
+        val path: File = local / (if (version.toString.trim.endsWith("SNAPSHOT")) "snapshots" else "releases")
         Some(Resolver.file("Github Pages", path)(Patterns(true, Resolver.mavenStyleBasePattern)))
       },
       publishMavenStyle := true
