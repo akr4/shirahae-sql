@@ -37,9 +37,9 @@ class RowIteratorSuite extends AnyFunSuite {
     val it = new RowIterator(session, rs)
 
     assert(it.hasNext === true)
-    assert(it.next.int(1) === 1)
+    assert(it.next().int(1) === 1)
     assert(it.hasNext === true)
-    assert(it.next.int(1) === 2)
+    assert(it.next().int(1) === 2)
     assert(it.hasNext === false)
   }
 
@@ -59,10 +59,10 @@ class RowIteratorSuite extends AnyFunSuite {
 
     assert(it.hasNext === true)
     assert(it.hasNext === true)
-    assert(it.next.int(1) === 1)
+    assert(it.next().int(1) === 1)
     assert(it.hasNext === true)
     assert(it.hasNext === true)
-    assert(it.next.int(1) === 2)
+    assert(it.next().int(1) === 2)
     assert(it.hasNext === false)
     assert(it.hasNext === false)
   }

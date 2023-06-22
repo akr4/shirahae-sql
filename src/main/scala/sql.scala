@@ -66,7 +66,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
   def selectOne[A](sql: String, params: Parameter[_]*)(f: Row => A): Option[A] = {
     select(sql, params: _*) { rows =>
       if (rows.hasNext) {
-        val nextRow = f(rows.next)
+        val nextRow = f(rows.next())
         if (rows.hasNext) throw new TooManyRowsException
         Some(nextRow)
       } else {
@@ -75,7 +75,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
     }
   }
 
-  /** TODO: support arbitary number of generated keys */
+  /** TODO: support arbitrary number of generated keys */
   def updateWithGeneratedKey(sql: String, params: Parameter[_]*): Long = {
     using(conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) { stmt =>
       updateParams(stmt, params: _*)
@@ -118,15 +118,15 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
     }
   }
 
-  private def updateParams(stmt: PreparedStatement, params: Parameter[_]*) {
-    for ((param, position) <- params.zip(Stream.iterate(1)(_ + 1))) {
+  private def updateParams(stmt: PreparedStatement, params: Parameter[_]*): Unit = {
+    for ((param, position) <- params.zip(LazyList.iterate(1)(_ + 1))) {
       updateParam(stmt, param, position)
     }
   }
 
   @annotation.tailrec
-  private def updateParam(stmt: PreparedStatement, param: Parameter[_], position: Int) {
-    def setNull(stmt: PreparedStatement, position: Int) {
+  private def updateParam(stmt: PreparedStatement, param: Parameter[_], position: Int): Unit = {
+    def setNull(stmt: PreparedStatement, position: Int): Unit = {
       stmt.setNull(position, stmt.getParameterMetaData.getParameterType(position))
     }
 
@@ -229,4 +229,3 @@ class RowIterator(session: Session, rs: ResultSet) extends Iterator[Row] {
     new Row(session, rs)
   }
 }
-

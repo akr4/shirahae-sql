@@ -25,10 +25,10 @@ import Imports._
 
 class SqlSuite extends AnyFunSuite with BeforeAndAfter {
 
-  val db = Database.forDriver("org.hsqldb.jdbc.JDBCDriver", "jdbc:hsqldb:mem:hsqldb:test")
+  val db: Database = Database.forDriver("org.hsqldb.jdbc.JDBCDriver", "jdbc:hsqldb:mem:hsqldb:test")
 
 
-  def prepareEmp {
+  def prepareEmp(): Unit = {
     Try { db.ddl("drop table emp") }
     db.ddl("create table emp (id integer primary key, name varchar(30))")
     db.withTransaction { s =>
@@ -37,7 +37,7 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
     }
   }
 
-  def prepareTestTable {
+  def prepareTestTable(): Unit = {
     Try { db.ddl("drop table test") }
     db.ddl(
       """create table test (
@@ -54,15 +54,15 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("select should return existing records") {
-    prepareEmp
+    prepareEmp()
     val result = db.withTransaction { _.select("select id, name from emp")(_.map(_.int(1)).toList) }
     assert(result.size === 2)
-    assert(result(0) === 1)
+    assert(result.head === 1)
     assert(result(1) === 2)
   }
 
   test("fold example") {
-    prepareEmp
+    prepareEmp()
     val max = db.withTransaction {
       _.select("select id from emp") { rows =>
         // find max id
@@ -75,40 +75,40 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("selectOne should return None if not found") {
-    prepareEmp
+    prepareEmp()
     val result = db.withTransaction { _.selectOne("select * from emp where id = -1") { _ => }}
     assert(result === None)
   }
 
   test("selectOne should return Some only if one record found") {
-    prepareEmp
+    prepareEmp()
     val result = db.withTransaction { _.selectOne("select id from emp where id = 1") { _.int(1) }}
     assert(result === Some(1))
   }
 
   test("selectOne should throw TooManyRowsException if there are more") {
-    prepareEmp
+    prepareEmp()
     intercept[TooManyRowsException] {
       db.withTransaction { _.selectOne("select id from emp") { _.int(1) }}
     }
   }
 
   test("update can insert") {
-    prepareEmp
+    prepareEmp()
     db.withTransaction { _.update("insert into emp (id, name) values (?, ?)", 100, "name100") }
     val name = db.withTransaction { _.selectOne("select name from emp where id = ?", 100) { _.string(1) }}.get
     assert(name === "name100")
   }
 
   test("update can update") {
-    prepareEmp
+    prepareEmp()
     db.withTransaction { _.update("update emp set name = ? where id = 1", "name999") }
     val name = db.withTransaction { _.selectOne("select name from emp where id = ?", 1) { _.string(1) }}.get
     assert(name === "name999")
   }
 
   test("update can delete") {
-    prepareEmp
+    prepareEmp()
     db.withTransaction { _.update("delete from emp where id = 1") }
     val name = db.withTransaction { _.selectOne("select name from emp where id = ?", 1) { _.string(1) }}
     assert(name === None)
@@ -123,7 +123,7 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("can insert null") {
-    prepareTestTable
+    prepareTestTable()
     db.withTransaction { session =>
       session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?, ?)", null, null, null, null, null, null, null, null, null)
     }
@@ -145,8 +145,8 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("can insert some") {
-    prepareTestTable
-    val nstNow = NST.DateTime.now
+    prepareTestTable()
+    val nstNow = NST.DateTime.now()
     val jtNow = LocalDateTime.now
     val instantNow = Instant.now
     db.withTransaction { session =>
@@ -171,7 +171,7 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("can insert none") {
-    prepareTestTable
+    prepareTestTable()
     // StackOverFlowError in compilation without explicit type declaration (Scala 2.11.2)
     db.withTransaction { session =>
       session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -195,8 +195,8 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("can get values") {
-    prepareTestTable
-    val nstNow = NST.DateTime.now
+    prepareTestTable()
+    val nstNow = NST.DateTime.now()
     val jtNow = LocalDateTime.now
     val instantNow = Instant.now
     db.withTransaction { session =>
@@ -222,8 +222,8 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("can get values by column name") {
-    prepareTestTable
-    val nstNow = NST.DateTime.now
+    prepareTestTable()
+    val nstNow = NST.DateTime.now()
     val jtNow = LocalDateTime.now
     val instantNow = Instant.now
     db.withTransaction { session =>
@@ -260,8 +260,8 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   }
 
   test("can get opt values") {
-    prepareTestTable
-    val now = NST.DateTime.now
+    prepareTestTable()
+    val now = NST.DateTime.now()
     db.withTransaction { session =>
       session.update("insert into test (c_varchar, c_timestamp1) values (?, ?)", "abc", now)
     }

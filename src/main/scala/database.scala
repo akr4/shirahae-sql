@@ -15,15 +15,13 @@
  */
 package net.physalis.shirahae
 
-import java.sql.{ Connection, PreparedStatement, ResultSet, SQLException }
 import javax.sql.DataSource
-import scala.util.control.Exception._
 
 
 class Database(tm: TransactionManager, cf: ConnectionFactory,
   implicit private val sqlLogger: SqlLogger = SimpleSqlLogger) extends Using {
 
-  def ddl(sql: String) {
+  def ddl(sql: String): Unit = {
     withSession(_.update(sql))
   }
 
@@ -41,6 +39,6 @@ object Database {
   def forDataSource(ds: DataSource) =
     new Database(LocalTransactionManager, new DataSourceConnectionFactory(ds))
 
-  def forDriver(driverClassName: String, url: String, username: String = null, password: String = null) =
-    new Database(LocalTransactionManager, new JdbcDriverConnectionFactory(driverClassName, url, username, password))
+  def forDriver(driverClassName: String, url: String) =
+    new Database(LocalTransactionManager, new JdbcDriverConnectionFactory(driverClassName, url))
 }

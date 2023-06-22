@@ -22,8 +22,7 @@ import java.sql.Connection
 
 class TransactionSuite extends AnyFunSuite {
 
-  //implicit val sqlLogger = ParameterEmbeddedStyleSqlLogger
-  implicit val sqlLogger = SimpleSqlLogger
+  implicit val sqlLogger: SimpleSqlLogger.type = SimpleSqlLogger
 
   test("nested transaction should do nothing") {
     val conn = mock(classOf[Connection])
@@ -41,7 +40,7 @@ class TransactionSuite extends AnyFunSuite {
     })
 
     verify(cf, times(1)).newConnection
-    verify(conn, times(1)).commit
+    verify(conn, times(1)).commit()
   }
 }
 

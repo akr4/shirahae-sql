@@ -33,8 +33,8 @@ object ErrorTransactionManager extends TransactionManager {
 
 /** TransactionManager which use Connection.commit/rollback */
 object LocalTransactionManager extends TransactionManager with LazyLogging {
-  val underlyingSession = new ThreadLocal[Option[Session]] {
-    override def initialValue = None
+  private val underlyingSession: ThreadLocal[Option[Session]] = new ThreadLocal[Option[Session]] {
+    override def initialValue: Option[Session] = None
   }
 
   def withTransaction[A](cf: ConnectionFactory, f: Session => A)(implicit sqlLogger: SqlLogger): A = {

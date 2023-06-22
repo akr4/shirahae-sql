@@ -17,25 +17,24 @@ package net.physalis.shirahae
 
 import com.typesafe.scalalogging.LazyLogging
 import com.github.nscala_time.time.Imports._
-import net.physalis.shirahae.EmbeddedParameterStyleSqlLogger.replace
 
 trait SqlLogger {
-  def log(sql: String, params: Parameter[_]*)
+  def log(sql: String, params: Parameter[_]*): Unit
 }
 
 object SimpleSqlLogger extends SqlLogger with LazyLogging {
-  def log(sql: String, params: Parameter[_]*) {
+  def log(sql: String, params: Parameter[_]*): Unit = {
     val s = (sql :: params.zipWithIndex.map { x => s"${x._2 + 1}: ${x._1}" }.toList).mkString("\n")
     logger.debug(s)
   }
 }
 
 object EmbeddedParameterStyleSqlLogger extends SqlLogger with LazyLogging {
-  val R = """\?""".r
-  val lineBreakR = """\n""".r
-  val spaceR = """\s+""".r
+  private val R = """\?""".r
+  private val lineBreakR = """\n""".r
+  private val spaceR = """\s+""".r
 
-  def log(sql: String, params: Parameter[_]*) {
+  def log(sql: String, params: Parameter[_]*): Unit = {
     logger.debug(createMessage(sql, params.toList))
   }
 
