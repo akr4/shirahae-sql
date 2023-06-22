@@ -19,11 +19,11 @@ import java.time.{Instant, LocalDateTime}
 
 import scala.util.Try
 import com.github.nscala_time.time.{Imports => NST}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.BeforeAndAfter
 import Imports._
 
-class SqlSuite extends FunSuite with BeforeAndAfter {
+class SqlSuite extends AnyFunSuite with BeforeAndAfter {
 
   val db = Database.forDriver("org.hsqldb.jdbc.JDBCDriver", "jdbc:hsqldb:mem:hsqldb:test")
 

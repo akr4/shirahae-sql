@@ -15,13 +15,12 @@
  */
 package net.physalis.shirahae
 
-import scala.util.Try
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.Mockito._
 
 import java.sql.ResultSet
 
-class RowIteratorSuite extends FunSuite {
+class RowIteratorSuite extends AnyFunSuite {
 
   test("iterate through resultset") {
     val session = mock(classOf[Session])

@@ -15,14 +15,12 @@
  */
 package net.physalis.shirahae
 
-import scala.util.Try
-import org.scalatest.FunSuite
-import org.mockito.Mockito._
+import org.scalatest.funsuite.AnyFunSuite
 import Imports._
 
 import com.github.nscala_time.time.Imports._
 
-class LogSuite extends FunSuite {
+class LogSuite extends AnyFunSuite {
 
   test("test types") {
     val now = new DateTime(2013, 8, 16, 23, 9, 0, 0)

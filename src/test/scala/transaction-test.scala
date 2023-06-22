@@ -15,13 +15,12 @@
  */
 package net.physalis.shirahae
 
-import scala.util.Try
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.Mockito._
 
 import java.sql.Connection
 
-class TransactionSuite extends FunSuite {
+class TransactionSuite extends AnyFunSuite {
 
   //implicit val sqlLogger = ParameterEmbeddedStyleSqlLogger
   implicit val sqlLogger = SimpleSqlLogger
