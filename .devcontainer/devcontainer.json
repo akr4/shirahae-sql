@@ -1,0 +1,7 @@
+{
+    "name": "Sake API",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        "ghcr.io/devcontainers-extra/features/sbt-sdkman:2": {}
+    }
+}
