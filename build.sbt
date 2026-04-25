@@ -17,13 +17,14 @@ lazy val root = (project in file(".")).
       publishMavenStyle := true
     )),
     name := "shirahae-sql",
+    Test / fork := true,
+    Test / javaOptions += "-XX:+EnableDynamicAgentLoading",
     libraryDependencies := Seq(
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
       "com.github.nscala-time" %% "nscala-time" % "2.32.0",
       "org.scalatest" %% "scalatest" % "3.2.16" % "test",
-      "org.mockito" % "mockito-core" % "1.9.5" % "test",
-      "org.hsqldb" % "hsqldb" % "2.2.9" % "test",
-      "ch.qos.logback" % "logback-classic" % "1.0.12" % "test",
-      "org.codehaus.groovy" % "groovy" % "2.1.3" % "test"
+      "org.mockito" % "mockito-core" % "5.14.2" % "test",
+      "org.hsqldb" % "hsqldb" % "2.7.4" % "test",
+      "ch.qos.logback" % "logback-classic" % "1.5.14" % "test"
     )
   )

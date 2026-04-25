@@ -45,6 +45,7 @@ object Imports {
   implicit def convert(x: LocalDateTime): Parameter[LocalDateTime] = Parameter(x)
   implicit def convert(x: Instant): Parameter[Instant] = Parameter(x)
   implicit def convert(x: Boolean): Parameter[Boolean] = Parameter(x)
+  implicit def convert(x: Array[Byte]): Parameter[Array[Byte]] = Parameter(x)
   implicit def convert[A](x: Option[A]): Parameter[Option[A]] = x match {
     case Some(y) => Parameter(Some(y))
     case None => Parameter(None)
@@ -146,6 +147,7 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
         case Parameter(p: LocalDateTime) => stmt.setTimestamp(position, java.sql.Timestamp.valueOf(p))
         case Parameter(p: Instant) => stmt.setTimestamp(position, java.sql.Timestamp.from(p))
         case Parameter(p: Boolean) => stmt.setBoolean(position, p)
+        case Parameter(p: Array[Byte]) => stmt.setBytes(position, p)
         case Parameter(x) =>
           val className = x.getClass.getName
           throw new IllegalArgumentException(s"unsupported type: $className $x")
@@ -195,6 +197,10 @@ class Row(session: Session, rs: ResultSet) {
   def instant(c: String): Instant = Option(rs.getTimestamp(c)).map(_.toInstant).orNull
   def instantOpt(n: Int): Option[Instant] = opt(n)(instant)
   def instantOpt(c: String): Option[Instant] = opt(c)(instant)
+  def bytes(n: Int): Array[Byte] = rs.getBytes(n)
+  def bytes(c: String): Array[Byte] = rs.getBytes(c)
+  def bytesOpt(n: Int): Option[Array[Byte]] = opt(n)(bytes)
+  def bytesOpt(c: String): Option[Array[Byte]] = opt(c)(bytes)
   def any(n: Int): Any = rs.getObject(n)
   def any(c: String): Any = rs.getObject(c)
   def anyOpt(n: Int): Option[Any] = opt(n)(any)

@@ -259,6 +259,98 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
     assert(result.get._10 === instantNow)
   }
 
+  def prepareBinaryTable(): Unit = {
+    Try { db.ddl("drop table test_binary") }
+    db.ddl("create table test_binary (id integer, c_binary varbinary(100))")
+  }
+
+  test("can insert and read bytes") {
+    prepareBinaryTable()
+    val data = Array[Byte](1, 2, 3, 4, 5)
+    db.withTransaction { session =>
+      session.update("insert into test_binary values (?, ?)", 1, data)
+    }
+
+    val result = db.withTransaction { _.selectOne("select c_binary from test_binary where id = ?", 1) {
+      row => row.bytes(1)
+    }}
+
+    assert(result.isDefined)
+    assert(result.get.sameElements(data))
+  }
+
+  test("can read bytes by column name") {
+    prepareBinaryTable()
+    val data = Array[Byte](10, 20, 30)
+    db.withTransaction { session =>
+      session.update("insert into test_binary values (?, ?)", 1, data)
+    }
+
+    val result = db.withTransaction { _.selectOne("select c_binary from test_binary where id = ?", 1) {
+      row => row.bytes("c_binary")
+    }}
+
+    assert(result.isDefined)
+    assert(result.get.sameElements(data))
+  }
+
+  test("bytesOpt should return None for null") {
+    prepareBinaryTable()
+    db.withTransaction { session =>
+      session.update("insert into test_binary values (?, ?)", 1, null)
+    }
+
+    val result = db.withTransaction { _.selectOne("select c_binary from test_binary where id = ?", 1) {
+      row => row.bytesOpt(1)
+    }}
+
+    assert(result === Some(None))
+  }
+
+  test("bytesOpt should return Some for non-null bytes") {
+    prepareBinaryTable()
+    val data = Array[Byte](0, 127, -128, -1)
+    db.withTransaction { session =>
+      session.update("insert into test_binary values (?, ?)", 1, data)
+    }
+
+    val result = db.withTransaction { _.selectOne("select c_binary from test_binary where id = ?", 1) {
+      row => row.bytesOpt(1)
+    }}
+
+    assert(result.isDefined)
+    assert(result.get.isDefined)
+    assert(result.get.get.sameElements(data))
+  }
+
+  test("can insert Some bytes") {
+    prepareBinaryTable()
+    val data = Array[Byte](1, 2, 3)
+    db.withTransaction { session =>
+      session.update("insert into test_binary values (?, ?)", 1, Some(data))
+    }
+
+    val result = db.withTransaction { _.selectOne("select c_binary from test_binary where id = ?", 1) {
+      row => row.bytes(1)
+    }}
+
+    assert(result.isDefined)
+    assert(result.get.sameElements(data))
+  }
+
+  test("can insert None bytes") {
+    prepareBinaryTable()
+    db.withTransaction { session =>
+      session.update("insert into test_binary values (?, ?)", 1, None: Option[Array[Byte]])
+    }
+
+    val result = db.withTransaction { _.selectOne("select c_binary from test_binary where id = ?", 1) {
+      row => row.bytesOpt(1)
+    }}
+
+    assert(result === Some(None))
+  }
+
   test("can get opt values") {
     prepareTestTable()
     val now = NST.DateTime.now()
