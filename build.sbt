@@ -4,7 +4,7 @@ lazy val root = (project in file(".")).
       organization := "net.physalis",
       scalaVersion := "2.13.11",
       crossScalaVersions := Seq("2.12.18", "2.13.11"),
-      version := "0.24",
+      version := "0.25",
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
       resolvers ++= Seq(
         "typesafe" at "https://repo.typesafe.com/typesafe/releases/"
