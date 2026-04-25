@@ -1,0 +1,159 @@
+name: Scala Steward Compat Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  compat-check:
+    if: |
+      github.event.pull_request.user.type == 'Bot' &&
+      startsWith(github.head_ref, 'update/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude compatibility analysis
+        id: analyze
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: false
+          allowed_bots: aiiro-scala-steward
+          claude_args: |
+            --model claude-opus-4-6
+            --allowedTools "Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api:*),Grep,Read,Glob"
+            --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["影響なし","要確認","要修正"]},"update_type":{"type":"string","enum":["version-update:semver-major","version-update:semver-minor","version-update:semver-patch"]}},"required":["verdict","update_type"]}'
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            ## タスク
+            この Scala Steward PR の依存更新が、本コードベースに対して非互換を引き起こすかを評価してください。評価結果はコメントとして投稿します。ファイル編集や approval、merge などのアクションは一切行わないでください。
+
+            ## メタデータ抽出
+            Scala Steward は Dependabot と異なり action output でメタデータを提供しません。`gh pr view ${{ github.event.pull_request.number }}` で title / body / branch 名を取得し、以下を特定してください:
+            - DEPENDENCY NAME (例: `software.amazon.awssdk:s3`、sbt プラグインの場合は `<groupId>:<artifactId>`)
+            - PREVIOUS VERSION
+            - NEW VERSION
+            - UPDATE TYPE (semver を比較して `version-update:semver-major` / `version-update:semver-minor` / `version-update:semver-patch` のいずれかを判定)
+            - PACKAGE ECOSYSTEM (通常は `sbt`。sbt プラグインや sbt 本体のバージョン更新も含む)
+
+            ## 情報源優先順位
+            1. PR description 内の release notes（Scala Steward が自動添付）
+            2. GitHub Releases（`gh api` 経由で取得可能）
+            3. リポジトリの CHANGELOG.md
+            4. 必要に応じて公式サイトの情報
+
+            ## 評価手順
+            1. `gh pr view ${{ github.event.pull_request.number }}` で PR description / release notes / commits を確認し、旧バージョン〜新バージョン間に含まれるすべての中間バージョンを特定する
+            2. 各中間バージョンの release notes / tag ページの URL を `gh api` 等で取得し控えておく
+            3. 各バージョンの release notes の **各項目を1件ずつ** 洗い出す（箇条書き粒度。省略・集約しない）
+            4. 各項目について、`Grep` / `Read` / `Glob` でコードベース内の該当依存の使用箇所を確認し、breaking change の有無とコードベースへの影響を判断する
+            5. 総合判定を決定する:
+               - **影響なし**: 全項目で breaking change がない、または使用箇所が breaking change の影響を受けない
+               - **要確認**: 疑わしい項目がある、または判断材料が不足している
+               - **要修正**: 明確にコード修正が必要な breaking change がある
+
+            ## 出力フォーマット（必須・厳守）
+            評価が完了したら、`gh pr comment ${{ github.event.pull_request.number }} --body` で以下のフォーマットの単一コメントを投稿してください。
+
+            **重要**: このフォーマットは厳守してください。以下で定義されたセクション (`##` 見出し) 以外を追加してはいけません。独自にサマリー表・注目点・検証結果などの追加セクションを作らないでください。`## 概要` のサマリー表は必須なので省略せず必ず記載してください。
+
+            ```
+            ## 影響評価: 影響なし
+            ## 更新種別: version-update:semver-minor
+            ## 参照情報
+            - [release notes](https://github.com/owner/repo/releases/tag/vX.Y.Z)
+            - [CHANGELOG.md](https://github.com/owner/repo/blob/main/CHANGELOG.md)
+            - <その他参照した URL>
+            ## 概要
+            | バージョン | 項目数 | 影響なし | 要確認 | 要修正 |
+            |---|---|---|---|---|
+            | vX.Y.Z | 8 | 8 | 0 | 0 |
+            | vX.Y.W | 5 | 4 | 1 | 0 |
+            | 合計 | 13 | 12 | 1 | 0 |
+            ## 変更内容
+            ### vX.Y.Z ([release notes](https://github.com/owner/repo/releases/tag/vX.Y.Z))
+            - **[影響なし] <項目タイトル1>**: <項目の内容を1〜2文で要約し、breaking change かどうか・本コードベースへの影響を明記>
+              > <release notes の原文をそのまま引用>
+            - **[影響なし] <項目タイトル2>**: <同上>
+              > <原文>
+            ### vX.Y.W ([release notes](https://...))
+            - **[要確認] <項目タイトル3>**: <同上>
+              > <原文>
+            - ...
+            ## 影響箇所
+            <コードベース内の使用箇所と評価。影響なしなら「該当箇所なし」>
+            ```
+
+            ルール:
+            - **セクション構造の厳守**: 上記で指定した `##` 見出しの順序・名称を完全に守ること。追加・変更・削除は不可。`## 変更内容` 配下のみ `### vX.Y.Z` サブセクションを使ってバージョンごとにグループ化する
+            - 先頭の総合「影響評価」の値は `影響なし` / `要確認` / `要修正` のいずれか1つ、括弧や装飾なしで記載
+            - `## 更新種別` には `version-update:semver-major` / `version-update:semver-minor` / `version-update:semver-patch` のいずれかを記載
+            - `## 概要` のサマリー表は更新バージョンが1つでも必須。「合計」行を必ず含める
+            - 参照情報の URL は必ず Markdown リンク形式 `[タイトル](URL)` で、実在する URL を記載（推測で URL を作らない。不明なら `gh api` で確認する）
+            - **全項目の個別列挙は必須**: release notes の各項目は原文粒度を維持し、まとめずに1件ずつ記載する。項目数が何件あっても（patch/minor で数十件〜100件あっても）省略・集約してはいけない。「その他軽微な修正」のような一括表現も禁止
+            - 各 `### vX.Y.Z` サブセクションの見出しにはそのバージョンの release notes / tag ページへのリンクを必ず付与する
+            - 変更内容の各項目には `[影響なし]` / `[要確認]` / `[要修正]` の個別判定を項目タイトル直前に必ず付与する
+            - 変更内容の各項目の直後に blockquote (`> `) で release notes / CHANGELOG の原文をそのまま引用する。要約や翻訳はせず、原文のまま記載する（コード部分も改変しない）
+            - 総合評価は各項目の判定の中で最も重いもの（要修正 > 要確認 > 影響なし）に一致させ、`## 概要` のサマリー表とも整合させる
+
+            ## コメント先頭の警告
+            以下のケースでは、コメント本文の先頭（`## 影響評価:` の前）に GitHub Alert 形式の警告を付与すること:
+            - `update_type` が `version-update:semver-major` の場合: `> [!WARNING]` + `> メジャーアップデートのため人間レビューが必要です`
+            - 総合判定が `要確認` の場合: `> [!WARNING]` + `> 判定「要確認」のため人間レビューが必要です`
+            - 総合判定が `要修正` の場合: `> [!WARNING]` + `> 判定「要修正」のため人間レビューが必要です`
+
+            ## 構造化出力
+            コメント投稿後、以下のフィールドを持つ JSON を最終出力として返してください（後段の workflow step がこの出力で判定を行います）:
+            - `verdict`: 総合判定（`影響なし` / `要確認` / `要修正` のいずれか）
+            - `update_type`: 更新種別（`version-update:semver-major` / `version-update:semver-minor` / `version-update:semver-patch` のいずれか）
+
+      - name: Decide workflow result
+        env:
+          STRUCTURED_OUTPUT: ${{ steps.analyze.outputs.structured_output }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$STRUCTURED_OUTPUT" ]; then
+            echo "::error::Claude Code Action の structured output が空です"
+            exit 1
+          fi
+
+          verdict=$(printf '%s' "$STRUCTURED_OUTPUT" | jq -r '.verdict')
+          update_type=$(printf '%s' "$STRUCTURED_OUTPUT" | jq -r '.update_type')
+
+          echo "verdict=$verdict"
+          echo "update_type=$update_type"
+
+          if [ "$update_type" = "version-update:semver-major" ]; then
+            echo "::warning::major update — 人間レビューが必要です"
+            gh pr review "$PR_NUMBER" --request-changes --body "メジャーアップデートのため人間レビューが必要です"
+            exit 1
+          fi
+
+          case "$verdict" in
+            "影響なし")
+              gh pr review "$PR_NUMBER" --approve --body "互換性チェック: 影響なし"
+              ;;
+            "要確認"|"要修正")
+              echo "::warning::判定『$verdict』— 人間レビューが必要です"
+              gh pr review "$PR_NUMBER" --request-changes --body "判定『$verdict』— 人間レビューが必要です"
+              exit 1
+              ;;
+            *)
+              echo "::error::structured output の verdict をパースできませんでした: '$verdict'"
+              exit 1
+              ;;
+          esac
