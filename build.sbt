@@ -25,6 +25,6 @@ lazy val root = (project in file(".")).
       "org.scalatest" %% "scalatest" % "3.2.16" % "test",
       "org.mockito" % "mockito-core" % "5.14.2" % "test",
       "org.hsqldb" % "hsqldb" % "2.7.4" % "test",
-      "ch.qos.logback" % "logback-classic" % "1.5.14" % "test"
+      "ch.qos.logback" % "logback-classic" % "1.5.32" % "test"
     )
   )
