@@ -20,7 +20,7 @@ lazy val root = (project in file(".")).
     Test / fork := true,
     Test / javaOptions += "-XX:+EnableDynamicAgentLoading",
     libraryDependencies := Seq(
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
       "com.github.nscala-time" %% "nscala-time" % "2.32.0",
       "org.scalatest" %% "scalatest" % "3.2.16" % "test",
       "org.mockito" % "mockito-core" % "5.14.2" % "test",
