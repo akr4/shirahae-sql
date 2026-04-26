@@ -23,7 +23,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
       "com.github.nscala-time" %% "nscala-time" % "2.32.0",
       "org.scalatest" %% "scalatest" % "3.2.16" % "test",
-      "org.mockito" % "mockito-core" % "5.14.2" % "test",
+      "org.mockito" % "mockito-core" % "5.23.0" % "test",
       "org.hsqldb" % "hsqldb" % "2.7.4" % "test",
       "ch.qos.logback" % "logback-classic" % "1.5.14" % "test"
     )
