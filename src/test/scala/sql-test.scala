@@ -147,7 +147,7 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   test("can insert some") {
     prepareTestTable()
     val nstNow = NST.DateTime.now()
-    val jtNow = LocalDateTime.now
+    val jtNow = LocalDateTime.now.truncatedTo(java.time.temporal.ChronoUnit.MICROS)
     val instantNow = Instant.now.truncatedTo(java.time.temporal.ChronoUnit.MICROS)
     db.withTransaction { session =>
       session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -197,7 +197,7 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   test("can get values") {
     prepareTestTable()
     val nstNow = NST.DateTime.now()
-    val jtNow = LocalDateTime.now
+    val jtNow = LocalDateTime.now.truncatedTo(java.time.temporal.ChronoUnit.MICROS)
     val instantNow = Instant.now.truncatedTo(java.time.temporal.ChronoUnit.MICROS)
     db.withTransaction { session =>
       session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -224,7 +224,7 @@ class SqlSuite extends AnyFunSuite with BeforeAndAfter {
   test("can get values by column name") {
     prepareTestTable()
     val nstNow = NST.DateTime.now()
-    val jtNow = LocalDateTime.now
+    val jtNow = LocalDateTime.now.truncatedTo(java.time.temporal.ChronoUnit.MICROS)
     val instantNow = Instant.now.truncatedTo(java.time.temporal.ChronoUnit.MICROS)
     db.withTransaction { session =>
       session.update("insert into test values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
