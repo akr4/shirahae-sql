@@ -120,8 +120,8 @@ class Session(conn: Connection)(implicit sqlLogger: SqlLogger) extends Using wit
   }
 
   private def updateParams(stmt: PreparedStatement, params: Parameter[_]*): Unit = {
-    for ((param, position) <- params.zip(Stream.iterate(1)(_ + 1))) {
-      updateParam(stmt, param, position)
+    for ((param, index) <- params.zipWithIndex) {
+      updateParam(stmt, param, index + 1)
     }
   }
 
