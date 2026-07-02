@@ -9,12 +9,14 @@ lazy val root = (project in file(".")).
       resolvers ++= Seq(
         "typesafe" at "https://repo.typesafe.com/typesafe/releases/"
       ),
-      publishTo := {
-        val local = Path("target/publish")
-        val path: File = local / (if (version.toString.trim.endsWith("SNAPSHOT")) "snapshots" else "releases")
-        Some(Resolver.file("Github Pages", path)(Patterns(true, Resolver.mavenStyleBasePattern)))
-      },
-      publishMavenStyle := true
+      publishTo := Some("GitHub Packages" at "https://maven.pkg.github.com/akr4/shirahae-sql"),
+      publishMavenStyle := true,
+      credentials += Credentials(
+        "GitHub Package Registry",
+        "maven.pkg.github.com",
+        sys.env.getOrElse("GITHUB_ACTOR", ""),
+        sys.env.getOrElse("GITHUB_TOKEN", "")
+      )
     )),
     name := "shirahae-sql",
     Test / fork := true,
